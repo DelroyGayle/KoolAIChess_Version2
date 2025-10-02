@@ -22,6 +22,7 @@ import re
 from time import sleep
 from extras import CustomException, in_check, is_it_checkmate
 from extras import finalise_computer_move
+from collections import deque
 
 
 def handle_internal_error():
@@ -206,7 +207,7 @@ def undo_pawn_promotions(chess):
     including any pawn promotions
     """
     Game.promoted_piece = ""  # reset
-    if not Game.undo_stack[-1]:
+    if len(Game.undo_stack[-1]) == 0:
         return
 
     undo_set = Game.undo_stack[-1]
@@ -813,7 +814,9 @@ def main_part2():
 
         # This stack is for the undo-ing of Pawn Promotions
         # It Grows and Shrinks with the calling of the 'evaluate' function
-        Game.undo_stack = []
+        # Use a 'deque' seeing that these are more efficient to use as stacks
+        # than lists.
+        Game.undo_stack = deque()
         Game.evaluating = True
 
         Game.evaluation_result = evaluate(chess, 0,
