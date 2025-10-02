@@ -283,6 +283,9 @@ class Game:
         Show the Chessboard
         Then display a message
         """
-        os.system("clear")
+        clear_screen()
         self.showboard()
         print(message)
+
+def clear_screen():
+    os.system('cls' if os.name=='nt' else 'clear')

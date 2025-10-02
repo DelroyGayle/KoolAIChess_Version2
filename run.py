@@ -799,7 +799,7 @@ def main_part2():
     f.open_input_file()
 
     chess.fillboard()
-    os.system("clear")
+    os.system('cls' if os.name=='nt' else 'clear')
     chess.showboard()
 
     # Game Loop
