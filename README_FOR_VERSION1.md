@@ -587,11 +587,11 @@ When the function call is over, the following two operations take place.
         return
 
     undo_set = Game.undo_stack[-1]
-    for index in undo_set:
+    for the_index in undo_set:
         # Remove the Pawn Promotion attributes
         # i.e. Undo them!
-        del chess.board[index].promoted_value
-        del chess.board[index].promoted_letter
+        del chess.board[the_index].promoted_value
+        del chess.board[the_index].promoted_letter
         # empty the set
     Game.undo_stack[-1].clear()
 ```

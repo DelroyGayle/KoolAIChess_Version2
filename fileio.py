@@ -724,9 +724,9 @@ def find_the_match(chess, all_matched_list,
 
     found_target = None
 
-    for index in all_matched_list:
-        from_file = index[0]
-        from_rank = index[1]
+    for the_index in all_matched_list:
+        from_file = the_index[0]
+        from_rank = the_index[1]
         all_the_moves = e.movelist(chess, from_file, from_rank,
                                    Game.global_piece_sign, False)
 
@@ -777,9 +777,9 @@ def determine_the_move(chess, piece, to_square):
     to_rank = to_square[1]
 
     # Filter all the squares where both the colour and the piece match
-    all_matched_list = [index for index in constants.PRESET_CHESSBOARD
-                        if chess.piece_sign(index) == Game.global_piece_sign
-                        and chess.piece_letter(index) == piece]
+    all_matched_list = [elem for elem in constants.PRESET_CHESSBOARD
+                        if chess.piece_sign(elem) == Game.global_piece_sign
+                        and chess.piece_letter(elem) == piece]
 
     # Go through each filtered square,
     # generated all the moves for the piece on a filtered square
@@ -800,10 +800,10 @@ def determine_the_capture_by_file(chess, piece, from_file, to_square):
 
     # Filter all the squares where
     # The file, the colour and the piece all match
-    all_matched_list = [index for index in constants.PRESET_CHESSBOARD
-                        if index[0] == from_file
-                        and chess.piece_sign(index) == Game.global_piece_sign
-                        and chess.piece_letter(index) == piece]
+    all_matched_list = [elem for elem in constants.PRESET_CHESSBOARD
+                        if elem[0] == from_file
+                        and chess.piece_sign(elem) == Game.global_piece_sign
+                        and chess.piece_letter(elem) == piece]
 
     # Go through each filtered square,
     # generated all the moves for the piece on a filtered square
@@ -824,10 +824,10 @@ def determine_the_capture_by_rank(chess, piece, from_rank, to_square):
 
     # Filter all the squares where
     # The rank, the colour and the piece all match
-    all_matched_list = [index for index in constants.PRESET_CHESSBOARD
-                        if index[1] == from_rank
-                        and chess.piece_sign(index) == Game.global_piece_sign
-                        and chess.piece_letter(index) == piece]
+    all_matched_list = [elem for elem in constants.PRESET_CHESSBOARD
+                        if elem[1] == from_rank
+                        and chess.piece_sign(elem) == Game.global_piece_sign
+                        and chess.piece_letter(elem) == piece]
 
     # Go through each filtered square,
     # generated all the moves for the piece on a filtered square

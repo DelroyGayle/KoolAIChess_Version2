@@ -323,7 +323,7 @@ def examine_this_square(diffs_tuple, chess, file, rank, piece_sign):
     if not ("1" <= newrank <= "8"):
         return False
 
-    index = newfile + newrank
+    the_index = newfile + newrank
     square_sign = chess.piece_sign(newfile, newrank)
 
     # True: Either an opponent piece or a blank square
@@ -449,8 +449,8 @@ def movelist(chess, from_file, from_rank, piece_sign, evaluating=False):
     Generate a list of possible moves for a particular piece
     """
 
-    index = from_file + from_rank
-    letter = chess.piece_letter(index)
+    the_index = from_file + from_rank
+    letter = chess.piece_letter(the_index)
     if not letter:
         return []  # blank square
 
@@ -459,7 +459,7 @@ def movelist(chess, from_file, from_rank, piece_sign, evaluating=False):
     all_the_moves = generate_moves_method(chess,
                                           from_file, from_rank,
                                           [],
-                                          chess.board[index].sign)
+                                          chess.board[the_index].sign)
 
     return all_the_moves
 
@@ -771,8 +771,8 @@ def in_check(chess, user_sign):
     # Go through each square on the board
     for letter in ["a", "b", "c", "d", "e", "f", "g", "h"]:
         for number in ["1", "2", "3", "4", "5", "6", "7", "8"]:
-            index = letter + number
-            if chess.piece_sign(index) == opponent_sign:
+            the_index = letter + number
+            if chess.piece_sign(the_index) == opponent_sign:
                 all_the_moves = movelist(chess, letter, number,
                                          opponent_sign, False)
                 # Start scanning each move
@@ -847,21 +847,22 @@ def is_it_checkmate(chess, who_are_you):
     """
 
     # Filter all the squares containing the same colour
-    same_colour_pieces_list = [index for index in constants.PRESET_CHESSBOARD
-                               if chess.piece_sign(index) == who_are_you]
+    same_colour_pieces_list = [the_index
+                               for the_index in constants.PRESET_CHESSBOARD
+                               if chess.piece_sign(the_index) == who_are_you]
 
     # Go through each square and see if a piece can make a play
     # such that the king is no longer under threat
-    for index in same_colour_pieces_list:
-        from_file = index[0]
-        from_rank = index[1]
+    for the_index in same_colour_pieces_list:
+        from_file = the_index[0]
+        from_rank = the_index[1]
         all_the_moves = movelist(chess, from_file, from_rank,
                                  who_are_you, False)
 
         # Loop through each possible move
         for m in range(len(all_the_moves)):
             exit_loop = test_each_move(chess, who_are_you,
-                                       index, all_the_moves[m])
+                                       the_index, all_the_moves[m])
 
             if exit_loop:
                 # Not Checkmate!

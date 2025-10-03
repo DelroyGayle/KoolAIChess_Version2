@@ -157,7 +157,7 @@ def record_if_king_or_rook_has_moved(chess, who_are_you,
     """
 
     # Note: 'is_piece_a_king' does not regard the colour of the piece
-    index = current_file + current_rank
+    the_index = current_file + current_rank
     if who_are_you == constants.PLAYER:
         # The Player
 
@@ -175,10 +175,10 @@ def record_if_king_or_rook_has_moved(chess, who_are_you,
         Only check if the relevant flag has not been set prior
         """
         Game.player_queen_rook_moved = (not Game.player_queen_rook_moved
-                                        and hasattr(chess.board[index],
+                                        and hasattr(chess.board[the_index],
                                                     "queenside"))
         Game.player_king_rook_moved = (not Game.player_king_rook_moved
-                                       and hasattr(chess.board[index],
+                                       and hasattr(chess.board[the_index],
                                                    "kingside"))
 
         return
@@ -199,10 +199,10 @@ def record_if_king_or_rook_has_moved(chess, who_are_you,
     Only check if the relevant flag has has not been set prior
     """
     Game.computer_queen_rook_moved = (not Game.computer_queen_rook_moved
-                                      and hasattr(chess.board[index],
+                                      and hasattr(chess.board[the_index],
                                                   "queenside"))
     Game.computer_king_rook_moved = (not Game.computer_king_rook_moved
-                                     and hasattr(chess.board[index],
+                                     and hasattr(chess.board[the_index],
                                                  "kingside"))
 
 

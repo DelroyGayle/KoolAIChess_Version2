@@ -97,8 +97,8 @@ def is_piece_taken(chess, to_file, to_rank, piece_sign):
     else:
         message = "Player took my "
 
-    index = to_file + to_rank
-    Game.show_taken_message = message + chess.board[index].piece_string()
+    the_index = to_file + to_rank
+    Game.show_taken_message = message + chess.board[the_index].piece_string()
     return piece_taken
 
 
@@ -211,11 +211,11 @@ def undo_pawn_promotions(chess):
         return
 
     undo_set = Game.undo_stack[-1]
-    for index in undo_set:
+    for the_index in undo_set:
         # Remove the Pawn Promotion attributes
         # i.e. Undo them!
-        del chess.board[index].promoted_value
-        del chess.board[index].promoted_letter
+        del chess.board[the_index].promoted_value
+        del chess.board[the_index].promoted_letter
         # empty the set
     Game.undo_stack[-1].clear()
 
@@ -353,13 +353,13 @@ def evaluate(chess, level, piece_sign, prune_factor):
        the same colour of the current user using a List Comprehension
     """
 
-    same_colour_pieces_list = [index for index in constants.PRESET_CHESSBOARD
-                               if chess.piece_sign(index) == piece_sign]
+    same_colour_pieces_list = [elem for elem in constants.PRESET_CHESSBOARD
+                               if chess.piece_sign(elem) == piece_sign]
 
-    for index in same_colour_pieces_list:
+    for the_index in same_colour_pieces_list:
         # Have a same coloured piece - evaluate its score
-        from_file = index[0]
-        from_rank = index[1]
+        from_file = the_index[0]
+        from_rank = the_index[1]
 
         all_the_moves = e.movelist(chess, from_file, from_rank,
                                    piece_sign, level == 1)
@@ -475,12 +475,12 @@ def process_computer_move(chess, from_file, from_rank, to_file, to_rank):
     # Are the Chess moves currently coming from an input file?
     # If so, fetch the next move from there
     if Game.reading_game_file:
-        tuple = f.handle_computer_move_from_inputfile(chess,
-                                                      from_file, from_rank,
-                                                      to_file, to_rank)
+        the_tuple = f.handle_computer_move_from_inputfile(chess,
+                                                          from_file, from_rank,
+                                                          to_file, to_rank)
         (move_finalised,
          from_file, from_rank,
-         to_file, to_rank) = tuple
+         to_file, to_rank) = the_tuple
 
     """
     At this stage, three possibilities
@@ -800,7 +800,7 @@ def main_part2():
     f.open_input_file()
 
     chess.fillboard()
-    os.system('cls' if os.name=='nt' else 'clear')
+    os.system('cls' if os.name == 'nt' else 'clear')
     chess.showboard()
 
     # Game Loop

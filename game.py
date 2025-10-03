@@ -185,47 +185,48 @@ class Game:
         self.board["a8"].queenside = True
         self.board["a1"].queenside = True
 
-    def piece_sign(self, index, rank=""):
+    def piece_sign(self, the_index, rank=""):
         """
         Determine the sign of the value of the piece on the square
         Blank squares have a "sign" of 0
         """
 
         if rank:
-            index += rank
+            the_index += rank
 
-        return getattr(self.board[index], "sign", constants.BLANK)
+        return getattr(self.board[the_index], "sign", constants.BLANK)
 
-    def piece_value(self, index, rank=""):
+    def piece_value(self, the_index, rank=""):
         """
         Determine the numerical value of the piece on the square
         Blank squares are depicted as None
         """
 
         if rank:
-            index += rank
+            the_index += rank
 
         # Check first whether it is a promoted pawn
         # If so, return its promoted piece's 'value'
-        thevalue = getattr(self.board[index], "promoted_value", None)
+        thevalue = getattr(self.board[the_index], "promoted_value", None)
         if thevalue is None:
-            thevalue = getattr(self.board[index], "value", constants.BLANK)
+            thevalue = getattr(self.board[the_index], "value", constants.BLANK)
         return thevalue
 
-    def piece_letter(self, index, rank=""):
+    def piece_letter(self, the_index, rank=""):
         """
         Determine the letter of the piece on the square
         Blank squares are depicted as None
         """
 
         if rank:
-            index += rank
+            the_index += rank
 
         # Check first whether it is a promoted pawn
         # If so, return its promoted piece's 'letter'
-        theletter = getattr(self.board[index], "promoted_letter", None)
+        theletter = getattr(self.board[the_index], "promoted_letter", None)
         if theletter is None:
-            theletter = getattr(self.board[index], "letter", constants.BLANK)
+            theletter = getattr(self.board[the_index],
+                                "letter", constants.BLANK)
         return theletter
 
     def showboard(self):
@@ -287,5 +288,6 @@ class Game:
         self.showboard()
         print(message)
 
+
 def clear_screen():
-    os.system('cls' if os.name=='nt' else 'clear')
+    os.system('cls' if os.name == 'nt' else 'clear')
