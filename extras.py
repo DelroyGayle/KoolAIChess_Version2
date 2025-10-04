@@ -17,6 +17,29 @@ import fileio as f
 from functools import cache
 
 
+KNIGHT_MOVES = (
+        (-1, -2),  # down 1, left 2
+        (-1, 2),   # down 1, right 2
+        (-2, -1),  # down 2, left 1
+        (-2, 1),   # down 2, right 1
+        (1, -2),   # up 1, left 2
+        (1, 2),    # up 1, right 2
+        (2, -1),   # up 2, left 1
+        (2, 1),    # up 2, right 1
+    )
+
+
+KING_MOVES = (
+        (0, 1),     # up
+        (0, -1),    # down
+        (-1, 0),    # left
+        (1, 0),     # right
+        (-1, 1),    # diagonal up-left
+        (1, 1),     # diagonal up-right
+        (-1, -1),   # diagonal down-left
+        (1, -1),    # diagonal down-right
+    )
+
 class CustomException(Exception):
     """
     My custom exception class
@@ -357,19 +380,8 @@ def generate_moves_for_knight(chess, file, rank,
     The legality of the moves are checked later
     """
 
-    knight_moves = [
-        (-1, -2),  # down 1, left 2
-        (-1, 2),   # down 1, right 2
-        (-2, -1),  # down 2, left 1
-        (-2, 1),   # down 2, right 1
-        (1, -2),   # up 1, left 2
-        (1, 2),    # up 1, right 2
-        (2, -1),   # up 2, left 1
-        (2, 1),    # up 2, right 1
-    ]
-
     moves_list += [add_knight_king_square(diffs, file, rank)
-                   for diffs in knight_moves
+                   for diffs in KNIGHT_MOVES
                    if examine_this_square(diffs, chess,
                                           file, rank, piece_sign)]
 
@@ -403,19 +415,8 @@ def generate_moves_for_king(chess, file, rank,
     The legality of the moves are checked later
     """
 
-    king_moves = [
-        (0, 1),     # up
-        (0, -1),    # down
-        (-1, 0),    # left
-        (1, 0),     # right
-        (-1, 1),    # diagonal up-left
-        (1, 1),     # diagonal up-right
-        (-1, -1),   # diagonal down-left
-        (1, -1),    # diagonal down-right
-    ]
-
     moves_list += [add_knight_king_square(diffs, file, rank)
-                   for diffs in king_moves
+                   for diffs in KING_MOVES
                    if examine_this_square(diffs, chess,
                                           file, rank, piece_sign)]
     return moves_list
