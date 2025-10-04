@@ -38,7 +38,7 @@ class Piece():
         """
         No 'print_string' for the Base Class
         """
-        return None
+        return ""
 
 
 class Rook(Piece):
@@ -139,7 +139,7 @@ class Pawn(Piece):
 
     def promote(self, letter, value, sign):
         """
-        Object-Oriented Approach to Pawn Promotion
+        Pawn Promotion
         """
         self.promoted_letter = letter
         self.promoted_value = value * sign

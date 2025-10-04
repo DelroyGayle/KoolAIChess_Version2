@@ -23,6 +23,7 @@ from time import sleep
 from extras import CustomException, in_check, is_it_checkmate
 from extras import finalise_computer_move
 from collections import deque
+from functools import cache
 
 
 def handle_internal_error():
@@ -163,6 +164,7 @@ def is_player_move_illegal(chess, from_file, from_rank, to_file, to_rank):
     return (True, None, None)
 
 
+@cache
 def coords_formula(file, rank):
     """
     Need to convert chessboard squares coordinates
@@ -316,15 +318,15 @@ def do_evaluation(chess, level, piece_sign, prune_factor,
 def evaluate(chess, level, piece_sign, prune_factor):
     """
     To quote Rod Bird:
-    This function checks all squares for players
-    to move then recursively test plays.
-    It plays its own move then plays the opponent's best move,
-    recursively over four moves.
-    So getting the potential net worth of each moveable player on the board.
-    The highest scored determines the computer's next move.
-    It is a classic mini max evaluation shortened
-    to its a negamax form with pruning
-    i.e. it does not waste time on lower value plays.
+    "This function checks all squares for players
+     to move then recursively test plays.
+     It plays its own move then plays the opponent's best move,
+     recursively over four moves.
+     So getting the potential net worth of each moveable player on the board.
+     The highest scored determines the computer's next move.
+     It is a classic mini max evaluation shortened
+     to its a negamax form with pruning
+     i.e. it does not waste time on lower value plays."
 
     To cater for any 'pawn promotions' that occur during evaluation
     'Game.undo_stack' is used to keep a record of any new promotions
@@ -609,9 +611,11 @@ def player_move_validation_loop(chess, from_file, from_rank, to_file, to_rank):
         if do_next == "return":
             # Valid Castling Move read from file
             return
-        elif do_next == "continue":
+
+        if do_next == "continue":
             # Invalid Chess Move read from file
             continue
+
         # else do_next is "pass"
         # which means either
         # 1) A Valid Chess Move was read from file or
@@ -633,9 +637,11 @@ def player_move_validation_loop(chess, from_file, from_rank, to_file, to_rank):
             # The En Passant move read from file
             # was valid and it has been performed
             return
-        elif do_next == "continue":
+
+        if do_next == "continue":
             # The En Passant move read from file was invalid!
             continue
+
         # else do_next is "pass"
         # It was not an En Passant move at all
         # Continue
@@ -646,7 +652,7 @@ def player_move_validation_loop(chess, from_file, from_rank, to_file, to_rank):
             (do_next, lower_string) = e.handle_player_move_from_keyboard(chess)
             if do_next == "return":
                 return
-            elif do_next == "continue":
+            if do_next == "continue":
                 continue
             # else do_next is "pass"
 
@@ -707,7 +713,8 @@ def player_move_validation_loop(chess, from_file, from_rank, to_file, to_rank):
             # Inform Player that Kool AI is thinking!
             print("I am evaluating my next move...")
             return
-        elif do_next == "continue":
+
+        if do_next == "continue":
             # Invalid En Passant Move
             continue
 
@@ -733,7 +740,7 @@ def player_move_validation_loop(chess, from_file, from_rank, to_file, to_rank):
             sleep(constants.SLEEP_VALUE)
             continue
 
-        elif illegal:
+        if illegal:
             chess.display(print_string)
             print("Illegal move")
             # Pause the computer so that the Player can read the message

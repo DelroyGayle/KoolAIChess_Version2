@@ -15,6 +15,14 @@ import os
 from extras import CustomException, finalise_computer_move
 
 
+class Regex:
+    LPAREN = "("
+    LBRACE = "{"
+    RBRACE = "}"
+    OA_BRACKET = "<"  # open angled bracket
+    CA_BRACKET = ">"  # close angled bracket
+
+
 def cleanup_input_stream(in_string):
     """
     Sanitise the input
@@ -69,7 +77,6 @@ def ignore_rav():
     Note: the parentheses can be nested
     """
 
-    LPAREN = "("
     count = 1  # Already found the first parenthesis
     position = 1  # So start the search to the right of it
     while True:
@@ -78,7 +85,7 @@ def ignore_rav():
         if not matched:
             break
 
-        elif matched.group(0) == LPAREN:
+        elif matched.group(0) == Regex.LPAREN:
             count += 1
             position = matched.end(0)
             continue
@@ -236,12 +243,6 @@ def regexp_loop():
     or end of string
     """
 
-    LPAREN = "("
-    LBRACE = "{"
-    RBRACE = "}"
-    OA_BRACKET = "<"  # open angled bracket
-    CA_BRACKET = ">"  # close angled bracket
-
     while True:
 
         # Remove any leading whitespace
@@ -293,69 +294,72 @@ def regexp_loop():
 # starts with a left brace character and continues to the next right brace
 # character.
 
-        if firstchar == ";":
-            # Ignore up to the end of the line
-            position = Game.input_stream.find("\n")
-            if position < 0:  # No \n found - therefore, remove entire contents
-                Game.input_stream = ""
+        match firstchar:
+            case ";":
+                # Ignore up to the end of the line
+                position = Game.input_stream.find("\n")
+                if position < 0:
+                    # No \n found - therefore, remove entire contents
+                    Game.input_stream = ""
+                    continue
+
+                # Remove everything up to and including the \n
+                Game.input_stream = Game.input_stream[position + 1:]
                 continue
 
-            # Remove everything up to and including the \n
-            Game.input_stream = Game.input_stream[position + 1:]
-            continue
+            case Regex.LBRACE:
+                # Ignore up to and including the following right brace
+                position = ignore_group_comment(Regex.LBRACE, Regex.RBRACE)
+                if not position:
+                    return False
+                else:
+                    continue
 
-        elif firstchar == LBRACE:
-            # Ignore up to and including the following right brace
-            position = ignore_group_comment(LBRACE, RBRACE)
-            if not position:
+            case Regex.OA_BRACKET:
+                # Ignore up to and including
+                # the following right close angled bracket
+                position = ignore_group_comment(Regex.OA_BRACKET,
+                                                Regex.CA_BRACKET)
+                if not position:
+                    return False
+                else:
+                    continue
+
+            case Regex.LPAREN:  # I.E. LEFT PARENTHESIS
+                # An RAV (Recursive Annotation Variation)
+                # is a sequence of movetext containing
+                # one or more moves enclosed in parentheses.
+                # Because the RAV is a recursive construct, it may be nested.
+                # Ignore up to and including
+                # the corresponding right nested parenthesis
+
+                position = ignore_rav()
+                if not position:
+                    return False
+                else:
+                    continue
+
+            case "$":  # I.E. $nnn
+                # An NAG (Numeric Annotation Glyph) is a movetext element
+                # that is used to indicate a simple annotation
+                # in a language independent manner.
+                # An NAG is formed from a dollar sign ("$")
+                # with a non-negative decimal integer suffix
+
+                #                   r"\A\$[0-9]+"
+                matched = constants.nag_pattern.match(Game.input_stream)
+                if matched:
+                    # Ignore $nnn
+                    Game.input_stream = Game.input_stream[matched.end(0):]
+                    continue
+
+                e.input_status_message("Cannot determine this NAG: "
+                                       + Game.input_stream[0:6])
                 return False
-            else:
-                continue
 
-        elif firstchar == OA_BRACKET:
-            # Ignore up to and including
-            # the following right close angled bracket
-            position = ignore_group_comment(OA_BRACKET, CA_BRACKET)
-            if not position:
-                return False
-            else:
-                continue
-
-        elif firstchar == LPAREN:  # I.E. LEFT PARENTHESIS
-            # An RAV (Recursive Annotation Variation)
-            # is a sequence of movetext containing
-            # one or more moves enclosed in parentheses.
-            # Because the RAV is a recursive construct, it may be nested.
-            # Ignore up to and including
-            # the corresponding right nested parenthesis
-
-            position = ignore_rav()
-            if not position:
-                return False
-            else:
-                continue
-
-        elif firstchar == "$":  # I.E. $nnn
-            # An NAG (Numeric Annotation Glyph) is a movetext element
-            # that is used to indicate a simple annotation
-            # in a language independent manner.
-            # An NAG is formed from a dollar sign ("$")
-            # with a non-negative decimal integer suffix
-
-            #                   r"\A\$[0-9]+"
-            matched = constants.nag_pattern.match(Game.input_stream)
-            if matched:
-                # Ignore $nnn
-                Game.input_stream = Game.input_stream[matched.end(0):]
-                continue
-
-            e.input_status_message("Cannot determine this NAG: "
-                                   + Game.input_stream[0:6])
-            return False
-
-        else:
-            # Either Move Number, a Chess Move or no more data
-            return True
+            case _:
+                # Either Move Number, a Chess Move or no more data
+                return True
 
 
 def handle_move_suffix(matched):
@@ -942,30 +946,29 @@ def determine_move_both_file_rank(chess):
         determine_the_move(chess, piece, target)
         return
 
-    elif (Game.move_type == constants.PAWN_CAPTURE_FILE
-          or Game.move_type == constants.PIECE_FILE_MOVE):
+    if (Game.move_type == constants.PAWN_CAPTURE_FILE
+       or Game.move_type == constants.PIECE_FILE_MOVE):
         # PAWN_CAPTURE_FILE EG exd4
         # PIECE_FILE_MOVE   EG Nfxe4, Rac1
         determine_the_capture_by_file(chess, piece, source, target)
         return
 
-    elif Game.move_type == constants.PIECE_RANK_MOVE:
+    if Game.move_type == constants.PIECE_RANK_MOVE:
         # EG N6xe4
         determine_the_capture_by_rank(chess, piece, source, target)
         return
 
-    elif (Game.move_type == constants.PIECE_BOTH_SQUARES
-          or Game.move_type == constants.LONG_NOTATION):
+    if (Game.move_type == constants.PIECE_BOTH_SQUARES
+       or Game.move_type == constants.LONG_NOTATION):
         # PIECE_BOTH_SQUARES EG Nd2xe4 e5xf6
         # LONG_NOTATION EG Ng1f3
         determine_the_capture_by_both_squares(chess,
                                               piece, source, target)
         return
 
-    else:
-        # Defensive Programming
-        raise CustomException(("Internal Error: Unknown Move Type {}")
-                              .format(Game.move_type))
+    # Defensive Programming
+    raise CustomException(("Internal Error: Unknown Move Type {}")
+                          .format(Game.move_type))
 
 
 def handle_move_text(chess):
@@ -1149,23 +1152,22 @@ def handle_computer_move_from_inputfile(chess,
             sleep(constants.COMPUTER_FILEIO_SLEEP_VALUE)
             return (False, from_file, from_rank, to_file, to_rank)
 
-        else:
-            # The Castling that was read from the input file was valid!
-            # Castling Validation has already been done
-            # to see whether Castling would put the Player in Check
-            # 'indicate_castling_done()' displayed the appropriate messaging
-            # regarding the Castling move
+        # The Castling that was read from the input file was valid!
+        # Castling Validation has already been done
+        # to see whether Castling would put the Player in Check
+        # 'indicate_castling_done()' displayed the appropriate messaging
+        # regarding the Castling move
 
-            # Since this chess move is not a pawn that has advanced two squares
-            # Ensure that previous values for 'Computer' have been reset
+        # Since this chess move is not a pawn that has advanced two squares
+        # Ensure that previous values for 'Computer' have been reset
 
-            m.reset_2squares_pawn_positions(constants.COMPUTER)
-            finalise_computer_move(chess, True)
-            pause_for_display()
-            computer_move_finalised = True
+        m.reset_2squares_pawn_positions(constants.COMPUTER)
+        finalise_computer_move(chess, True)
+        pause_for_display()
+        computer_move_finalised = True
 
-            return (computer_move_finalised,
-                    from_file, from_rank, to_file, to_rank)
+        return (computer_move_finalised,
+                from_file, from_rank, to_file, to_rank)
 
     # Was the move a En Passant Move?
     # If so, was it valid?

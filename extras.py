@@ -14,6 +14,7 @@ from game import Game
 import moves as m
 from time import sleep
 import fileio as f
+from functools import cache
 
 
 class CustomException(Exception):
@@ -29,6 +30,7 @@ class CustomException(Exception):
 """ ROUTINES THAT GENERATE EACH OF THE PIECE'S MOVES """
 
 
+@cache
 def advance_vertical(rank, steps):
     """
     Calculate the new rank
@@ -42,6 +44,7 @@ def advance_vertical(rank, steps):
     return newrank if "1" <= newrank <= "8" else None
 
 
+@cache
 def advance_horizontal(file, steps):
     """
     Calculate the new file
@@ -146,6 +149,7 @@ def horizontal_vertical(chess, file, rank, moves_list, piece_sign):
     return moves_list
 
 
+@cache
 def check_diagonally(chess, basefile, baserank,
                      horizontal, vertical, piece_sign):
     """
@@ -331,6 +335,7 @@ def examine_this_square(diffs_tuple, chess, file, rank, piece_sign):
     return piece_sign != square_sign
 
 
+@cache
 def add_knight_king_square(diffs_tuple, file, rank):
     """
     Having determined that it is possible
@@ -775,6 +780,7 @@ def in_check(chess, user_sign):
             if chess.piece_sign(the_index) == opponent_sign:
                 all_the_moves = movelist(chess, letter, number,
                                          opponent_sign, False)
+
                 # Start scanning each move
                 for m in range(len(all_the_moves)):
                     if (chess.piece_letter(all_the_moves[m])

@@ -12,6 +12,7 @@ from extras import in_check, finalise_computer_move, CustomException
 from extras import input_status_message, show_promotion_message
 import fileio as f
 from time import sleep
+from functools import cache
 
 
 def output_attacking_move(chess, who_are_you,
@@ -229,29 +230,31 @@ def produce_error_message(error_type):
     Display a message explaining why
     """
 
-    if error_type == constants.ALREADY_CASTLED:
-        Game.error_message = ("Castling has already been done. "
-                              "Each side can only castle once in a game.")
-    elif error_type == constants.NO_KING_ROOK:
-        Game.error_message = ("Either the king or chosen rook is in "
-                              "the wrong position for Castling.")
-    elif error_type == constants.KING_MOVED:
-        Game.error_message = ("Castling not allowed because "
-                              "the king has already been moved.")
-    elif error_type == constants.ROOK_MOVED:
-        Game.error_message = ("Castling not allowed because the chosen rook "
-                              "has already been moved.")
-    elif error_type == constants.NOT_ALL_BLANK:
-        Game.error_message = ("There must be no pieces between the king "
-                              "and the chosen rook.")
-    elif error_type == constants.KING_IN_CHECK:
-        Game.error_message = ("Castling cannot be done "
-                              "whilst the king is in check.")
-    elif error_type == constants.THROUGH_CHECK:
-        Game.error_message = ("The king must not pass through a square "
-                              "that is under attack by opponent pieces.")
-    elif error_type == constants.END_UP_IN_CHECK:
-        Game.error_message = "The king must not end up in check."
+    match error_type:
+        case constants.ALREADY_CASTLED:
+            Game.error_message = ("Castling has already been done. "
+                                  "Each side can only castle once in a game.")
+        case constants.NO_KING_ROOK:
+            Game.error_message = ("Either the king or chosen rook is in "
+                                  "the wrong position for Castling.")
+        case constants.KING_MOVED:
+            Game.error_message = ("Castling not allowed because "
+                                  "the king has already been moved.")
+        case constants.ROOK_MOVED:
+            Game.error_message = ("Castling not allowed "
+                                  "because the chosen rook "
+                                  "has already been moved.")
+        case constants.NOT_ALL_BLANK:
+            Game.error_message = ("There must be no pieces between the king "
+                                  "and the chosen rook.")
+        case constants.KING_IN_CHECK:
+            Game.error_message = ("Castling cannot be done "
+                                  "whilst the king is in check.")
+        case constants.THROUGH_CHECK:
+            Game.error_message = ("The king must not pass through a square "
+                                  "that is under attack by opponent pieces.")
+        case constants.END_UP_IN_CHECK:
+            Game.error_message = "The king must not end up in check."
 
 
 def castling_movement_done_already(who_are_you):
@@ -265,22 +268,24 @@ def castling_movement_done_already(who_are_you):
         if Game.player_castled:
             produce_error_message(constants.ALREADY_CASTLED)
             return True
-        elif Game.player_king_moved:
+
+        if Game.player_king_moved:
             produce_error_message(constants.KING_MOVED)
             return True
-        else:
-            return False
+
+        return False
 
     # Otherwise who_are_you == constants.COMPUTER
 
     if Game.computer_castled:
         produce_error_message(constants.ALREADY_CASTLED)
         return True
-    elif Game.computer_king_moved:
+
+    if Game.computer_king_moved:
         produce_error_message(constants.KING_MOVED)
         return True
-    else:
-        return False
+
+    return False
 
 
 def check_adjacent_squares(chess,
@@ -320,7 +325,6 @@ def check_adjacent_squares(chess,
             produce_error_message(constants.NOT_ALL_BLANK)
 
         else:  # Valid!
-
             result = True
 
         return result
@@ -352,7 +356,6 @@ def check_adjacent_squares(chess,
         produce_error_message(constants.NOT_ALL_BLANK)
 
     else:  # Valid!
-
         result = True
 
     return result
@@ -373,23 +376,25 @@ def check_castling_valid_part1(chess, who_are_you,
     if chess.piece_value(constants.CASTLING_KING_FILE, king_rook_rank) < 0:
         king_sign = constants.COMPUTER  # -1
     else:
-        king_sign = constants.PLAYER     # 1
+        king_sign = constants.PLAYER    # 1
 
     # Note: 'is_piece_a_king' does not regard the colour of the piece
 
     if castling_movement_done_already(who_are_you):
         produce_error_message(constants.ALREADY_CASTLED)
         return
-    elif not (is_piece_a_king(chess,
-                              constants.CASTLING_KING_FILE, king_rook_rank)
-              and king_sign == who_are_you):
+
+    if not (is_piece_a_king(chess,
+                            constants.CASTLING_KING_FILE, king_rook_rank)
+            and king_sign == who_are_you):
         produce_error_message(constants.NO_KING_ROOK)
         return
-    else:
-        return check_adjacent_squares(chess, who_are_you,
-                                      which_castle_side, king_rook_rank)
+
+    return check_adjacent_squares(chess, who_are_you,
+                                  which_castle_side, king_rook_rank)
 
 
+@cache
 def calculate_new_file(file, number):
     """
     Used for the Castling chess move
