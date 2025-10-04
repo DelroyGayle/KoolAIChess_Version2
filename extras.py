@@ -80,7 +80,7 @@ def check_horizontally(chess, file_start, limit, step, rank,
         # Reached an occupied square - proceed no further
         if square_sign != constants.BLANK:
             return moves_list
-
+    
     return moves_list
 
 
@@ -149,7 +149,6 @@ def horizontal_vertical(chess, file, rank, moves_list, piece_sign):
     return moves_list
 
 
-@cache
 def check_diagonally(chess, basefile, baserank,
                      horizontal, vertical, piece_sign):
     """
@@ -517,8 +516,8 @@ def output_message(message):
         print()
         return
 
-    for m in range(len(stripped)):
-        print(stripped[m])
+    for text in stripped:
+        print(text)
         return
 
 
@@ -782,10 +781,10 @@ def in_check(chess, user_sign):
                                          opponent_sign, False)
 
                 # Start scanning each move
-                for m in range(len(all_the_moves)):
-                    if (chess.piece_letter(all_the_moves[m])
+                for chess_move in all_the_moves:
+                    if (chess.piece_letter(chess_move)
                        == constants.KING_LETTER
-                       and chess.piece_value(all_the_moves[m])
+                       and chess.piece_value(chess_move)
                        == user_king_value):
                         # User King is in Check!
                         return True
@@ -866,9 +865,9 @@ def is_it_checkmate(chess, who_are_you):
                                  who_are_you, False)
 
         # Loop through each possible move
-        for m in range(len(all_the_moves)):
+        for chess_move in all_the_moves:
             exit_loop = test_each_move(chess, who_are_you,
-                                       the_index, all_the_moves[m])
+                                       the_index, chess_move)
 
             if exit_loop:
                 # Not Checkmate!

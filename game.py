@@ -240,14 +240,14 @@ class Game:
 
         print()
         # 5 spaces THEN 2 spaces each
-        print("{}A  B  C  D  E  F  G  H".format(space*5))
+        print(f"{space*5}A  B  C  D  E  F  G  H")
 
         # 3 spaces and 26 dashes "-"
-        print("{}{}".format(space*3, "-"*26))
+        print("f{space*3}{"-"*26)}")
 
         for row in range(8, 0, -1):
             # SPACE NUMBER |
-            output_string = "{}{} |".format(space, row)
+            output_string = f"{space}{row} |"
             for column in range(8):
                 position = (row + column) % 2
                 portion1 = left_bracket[position]
@@ -270,12 +270,12 @@ class Game:
                                       .lower()
                                       + portion2)
 
-            print("{}|".format(output_string))
+            print(f"{output_string}|")
 
         # 3 spaces and 26 dashes "-"
-        print("{}{}".format(space*3, "-"*26))
+        print(f"{space*3}{'-'*26}")
         # 5 spaces THEN 2 spaces each
-        print("{}A  B  C  D  E  F  G  H".format(space*5))
+        print(f"{space*5}A  B  C  D  E  F  G  H")
         print()
 
     def display(self, message):

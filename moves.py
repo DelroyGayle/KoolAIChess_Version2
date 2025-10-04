@@ -406,9 +406,7 @@ def calculate_new_file(file, number):
     # Defensive Programming
     if not ("a" <= new_file <= "h"):
         raise CustomException(("Internal Error: File is Off-board "
-                              "{} = {} + {}").format(new_file,
-                                                     file,
-                                                     number))
+                              f"{new_file} = {file} + {number}"))
 
     return new_file
 
@@ -728,6 +726,7 @@ def indicate_en_passant_done(chess, who_are_you, from_file, from_rank,
         print("Computer Took Your Pawn En Passant")
         reset_2squares_pawn_positions(constants.PLAYER)
     # Was there a Pawn Promotion? If so, Display a Message
+
     show_promotion_message()
     print()
     # Pause the computer so that the Player can read the output
@@ -858,8 +857,8 @@ def validate_and_perform_en_passant(chess, from_file, from_rank,
         # Redisplay the Board
         chess.display(display_chess_move)
         # Display error message
-        outstring = "Instead, Value: {}".format(chess.piece_value(from_file,
-                                                                  from_rank))
+        outstring = chess.piece_value(from_file, from_rank)
+        outstring = f"Instead, Value: {outstring}"
         output_error_message = ("INTERNAL ERROR: Expected the Attacking "
                                 "Piece to be a Pawn\n"
                                 "of the right colour for "
@@ -884,7 +883,8 @@ def validate_and_perform_en_passant(chess, from_file, from_rank,
         # Redisplay the Board
         chess.display(display_chess_move)
         # Display error message
-        format_string = "Instead, Value: {}"
+        piece = chess.piece_value(save_file, save_rank)
+        format_string = f"Instead, Value: {piece}"
         output_error_message = ("INTERNAL ERROR: Expected the Captured Piece "
                                 "to be a Pawn\n"
                                 "of the right colour for "
@@ -976,7 +976,7 @@ def check_if_inputfile_move_is_en_passant(chess, source, target):
             sleep(constants.COMPUTER_FILEIO_SLEEP_VALUE)
 
 
-def handle_evaluated_castling_move(chess, computer_move_finalised):
+def handle_evaluated_castling_move(chess, computer_move_finalised, the_tuple):
     """
     If the 'evaluate' function generated a Castling Move then perform it
     """
@@ -1002,6 +1002,9 @@ def handle_evaluated_castling_move(chess, computer_move_finalised):
         # Therefore, End the Program
         print("INTERNAL ERROR OCCURRED - VALID CASTLE MOVE EXPECTED",
               Game.general_string.result)
+        (_,
+         from_file, from_rank,
+         to_file, to_rank) = the_tuple
         print(from_file, from_rank, to_file, to_rank)
         print()
         handle_internal_error()

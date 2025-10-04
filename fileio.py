@@ -150,8 +150,7 @@ def open_input_file():
 
     if len(file_contents) > constants.FILE_SIZE_LIMIT:
         e.input_status_message(("Input file too big - larger than "
-                               "{} characters")
-                               .format(constants.FILE_SIZE_LIMIT))
+                               f"{constants.FILE_SIZE_LIMIT} characters"))
         sleep(5)
         return
 
@@ -168,8 +167,8 @@ def output_to_screen(outtable, output_ok, output_filename=""):
     """
     print("The moves of this Chess Game are as follows:")
     print()
-    for i in range(len(outtable)):
-        print(outtable[i])
+    for contents in outtable:
+        print(contents)
     print()
     if output_ok:
         print(f"These moves have also been written to {output_filename}")
@@ -225,8 +224,8 @@ def output_all_chess_moves():
                            + constants.OUTPUT_PGN_NAME)
 
         with open(output_filename, "w") as pgn_output_file:
-            for i in range(len(outtable)):
-                pgn_output_file.write(outtable[i] + "\n")
+            for text in outtable:
+                pgn_output_file.write(text + "\n")
         output_ok = True
     except IOError:
         # Ignore any output errors - rather, write to the screen instead
@@ -734,11 +733,11 @@ def find_the_match(chess, all_matched_list,
         all_the_moves = e.movelist(chess, from_file, from_rank,
                                    Game.global_piece_sign, False)
 
-        for m in range(len(all_the_moves)):
-            target_file = all_the_moves[m][0]
-            target_rank = all_the_moves[m][1]
+        for chess_move in all_the_moves:
+            target_file = chess_move[0]
+            target_rank = chess_move[1]
             if target_file == to_file and target_rank == to_rank:
-                found_target = all_the_moves[m]
+                found_target = chess_move
                 break
 
         if found_target:
@@ -967,8 +966,8 @@ def determine_move_both_file_rank(chess):
         return
 
     # Defensive Programming
-    raise CustomException(("Internal Error: Unknown Move Type {}")
-                          .format(Game.move_type))
+    raise CustomException("Internal Error: Unknown Move Type "
+                           f"{Game.move_type}")
 
 
 def handle_move_text(chess):
