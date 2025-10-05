@@ -243,7 +243,7 @@ class Game:
         print(f"{space*5}A  B  C  D  E  F  G  H")
 
         # 3 spaces and 26 dashes "-"
-        print("f{space*3}{'-'*26)}")
+        print(f"{space*3}{'-'*26}")
 
         for row in range(8, 0, -1):
             # SPACE NUMBER |
