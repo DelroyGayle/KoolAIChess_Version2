@@ -449,7 +449,7 @@ def determine_generate_move_method(piece_letter):
 """ THE END OF PIECES' ROUTINES """
 
 
-def movelist(chess, from_file, from_rank, piece_sign, evaluating=False):
+def movelist(chess, from_file, from_rank):
     """
     Generate a list of possible moves for a particular piece
     """
@@ -778,8 +778,7 @@ def in_check(chess, user_sign):
         for number in ["1", "2", "3", "4", "5", "6", "7", "8"]:
             the_index = letter + number
             if chess.piece_sign(the_index) == opponent_sign:
-                all_the_moves = movelist(chess, letter, number,
-                                         opponent_sign, False)
+                all_the_moves = movelist(chess, letter, number)
 
                 # Start scanning each move
                 for chess_move in all_the_moves:
@@ -862,8 +861,7 @@ def is_it_checkmate(chess, who_are_you):
     for the_index in same_colour_pieces_list:
         from_file = the_index[0]
         from_rank = the_index[1]
-        all_the_moves = movelist(chess, from_file, from_rank,
-                                 who_are_you, False)
+        all_the_moves = movelist(chess, from_file, from_rank)
 
         # Loop through each possible move
         for chess_move in all_the_moves:

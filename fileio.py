@@ -730,8 +730,7 @@ def find_the_match(chess, all_matched_list,
     for the_index in all_matched_list:
         from_file = the_index[0]
         from_rank = the_index[1]
-        all_the_moves = e.movelist(chess, from_file, from_rank,
-                                   Game.global_piece_sign, False)
+        all_the_moves = e.movelist(chess, from_file, from_rank)
 
         for chess_move in all_the_moves:
             target_file = chess_move[0]

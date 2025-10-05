@@ -114,8 +114,7 @@ def is_player_move_illegal(chess, from_file, from_rank, to_file, to_rank):
     """
 
     piece_sign = constants.PLAYER  # white piece
-    all_possible_moves = e.movelist(chess, from_file, from_rank,
-                                    piece_sign, False)
+    all_possible_moves = e.movelist(chess, from_file, from_rank)
 
     from_square = from_file + from_rank
     to_square = to_file + to_rank
@@ -363,8 +362,7 @@ def evaluate(chess, level, piece_sign, prune_factor):
         from_file = the_index[0]
         from_rank = the_index[1]
 
-        all_the_moves = e.movelist(chess, from_file, from_rank,
-                                   piece_sign, level == 1)
+        all_the_moves = e.movelist(chess, from_file, from_rank)
 
         # Loop through each possible move
         for (to_file, to_rank) in all_the_moves:
