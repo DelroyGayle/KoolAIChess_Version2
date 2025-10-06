@@ -40,6 +40,7 @@ KING_MOVES = (
         (1, -1),    # diagonal down-right
     )
 
+
 class CustomException(Exception):
     """
     My custom exception class
@@ -82,7 +83,7 @@ def advance_horizontal(file, steps):
 
 
 def check_horizontally(chess, file_start, limit, step, rank,
-                       moves_list, piece_sign):
+                       piece_sign):
     """
     Move either right to left OR left to right
     For each blank square append the square's coordinates
@@ -93,6 +94,7 @@ def check_horizontally(chess, file_start, limit, step, rank,
     return the list
     """
 
+    moves_list = []
     for m in range(file_start, limit, step):
         newfile = chr(m + constants.ASCII_A_MINUS1)  # 96
         square_sign = chess.piece_sign(newfile, rank)
@@ -103,12 +105,12 @@ def check_horizontally(chess, file_start, limit, step, rank,
         # Reached an occupied square - proceed no further
         if square_sign != constants.BLANK:
             return moves_list
-    
+
     return moves_list
 
 
 def check_vertically(chess, rank_start, limit, step,
-                     file, moves_list, piece_sign):
+                     file, piece_sign):
     """
     Move either from top to bottom OR from bottom to top
     For each blank square append the square's coordinates
@@ -119,6 +121,7 @@ def check_vertically(chess, rank_start, limit, step,
     return the list
     """
 
+    moves_list = []
     for m in range(rank_start, limit, step):
         newrank = chr(m + constants.ASCII_ZERO)  # 48
         square_sign = chess.piece_sign(file, newrank)
@@ -133,7 +136,7 @@ def check_vertically(chess, rank_start, limit, step,
     return moves_list
 
 
-def horizontal_vertical(chess, file, rank, moves_list, piece_sign):
+def horizontal_vertical(chess, file, rank, piece_sign):
     """
     Record blank squares or an opponent's square
     whilst scanning both horizontally and vertically
@@ -146,13 +149,13 @@ def horizontal_vertical(chess, file, rank, moves_list, piece_sign):
     # towards the left until reaching a nonblank square
     # or the edge of the board
     moves_list = check_horizontally(chess, base_file_number - 1, 0, -1,
-                                    rank, moves_list, piece_sign)
+                                    rank, piece_sign)
 
     # Move from the current piece's position,
     # towards the right until reaching a nonblank square
     # or the edge of the board
-    moves_list = check_horizontally(chess, base_file_number + 1, 9, 1,
-                                    rank, moves_list, piece_sign)
+    moves_list.extend(check_horizontally(chess, base_file_number + 1, 9, 1,
+                                         rank, piece_sign))
 
     # Convert 'rank' i.e. '1' to '8' to a number between 1 to 8
     base_rank_number = ord(rank) - constants.ASCII_ZERO  # 48
@@ -160,14 +163,14 @@ def horizontal_vertical(chess, file, rank, moves_list, piece_sign):
     # Move from the current piece's position,
     # towards the bottom until reaching a nonblank square
     # or the edge of the board
-    moves_list = check_vertically(chess, base_rank_number - 1, 0, -1,
-                                  file, moves_list, piece_sign)
+    moves_list.extend(check_vertically(chess, base_rank_number - 1, 0, -1,
+                                       file, piece_sign))
 
     # Move from the current piece's position,
     # towards the top until reaching a nonblank square
     # or the edge of the board
-    moves_list = check_vertically(chess, base_rank_number + 1, 9, 1,
-                                  file, moves_list, piece_sign)
+    moves_list.extend(check_vertically(chess, base_rank_number + 1, 9, 1,
+                                       file, piece_sign))
 
     return moves_list
 
@@ -279,12 +282,13 @@ def diagonal(chess, file, rank, moves_list, piece_sign):
 
 
 def generate_moves_for_pawn(chess, file, rank,
-                            moves_list, piece_sign):
+                            _, piece_sign):
     """
     Generate all the possible moves of the Pawn piece
     The legality of the moves are checked later
     """
 
+    moves_list = []
     rank_plus1 = advance_vertical(rank, piece_sign)
     if not rank_plus1:
         # Reached the edge of the board
@@ -324,12 +328,12 @@ def generate_moves_for_pawn(chess, file, rank,
 
 
 def generate_moves_for_rook(chess, file, rank,
-                            moves_list, piece_sign):
+                            _, piece_sign):
     """
     Generate all the possible moves of the Rook piece
     The legality of the moves are checked later
     """
-    return horizontal_vertical(chess, file, rank, moves_list, piece_sign)
+    return horizontal_vertical(chess, file, rank, piece_sign)
 
 
 def examine_this_square(diffs_tuple, chess, file, rank, piece_sign):
@@ -374,18 +378,17 @@ def add_knight_king_square(diffs_tuple, file, rank):
 
 
 def generate_moves_for_knight(chess, file, rank,
-                              moves_list, piece_sign):
+                              _, piece_sign):
     """
     Generate all the possible moves of the Knight piece
     The legality of the moves are checked later
     """
 
-    moves_list += [add_knight_king_square(diffs, file, rank)
-                   for diffs in KNIGHT_MOVES
-                   if examine_this_square(diffs, chess,
-                                          file, rank, piece_sign)]
-
-    return moves_list
+    return [add_knight_king_square(diffs, file, rank)
+            for diffs in KNIGHT_MOVES
+            if examine_this_square(diffs, chess,
+                                   file, rank, piece_sign)
+            ]
 
 
 def generate_moves_for_bishop(chess, file, rank,
@@ -404,7 +407,7 @@ def generate_moves_for_queen(chess, file, rank,
     The legality of the moves are checked later
     """
     moves_list = diagonal(chess, file, rank, moves_list, piece_sign)
-    moves_list = horizontal_vertical(chess, file, rank, moves_list, piece_sign)
+    moves_list.extend(horizontal_vertical(chess, file, rank, piece_sign))
     return moves_list
 
 
