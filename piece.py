@@ -117,7 +117,7 @@ class King(Piece):
                       if sign == constants.COMPUTER
                       else constants.VALUE_OF_PLAYER_KING)
         # King piece cannot be 'taken'
-        # So no 'piece_string'
+        # So no 'print_string'
 
 
 class Pawn(Piece):

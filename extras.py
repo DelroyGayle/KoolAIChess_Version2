@@ -198,10 +198,18 @@ def check_diagonally(chess, basefile, baserank,
     # Either an opponent piece or a blank square
     return newfile + newrank
 
-
-def diagonal(chess, file, rank, moves_list, piece_sign):
+def diagonal(chess, file, rank, piece_sign):
     """
     Record blank squares or an opponent's square
+    whilst scanning diagonally
+    """
+
+    return list(gen_diagonal(chess, file, rank, piece_sign))
+
+
+def gen_diagonal(chess, file, rank, piece_sign):
+    """
+    Generate blank squares or an opponent's square
     whilst scanning diagonally
     """
 
@@ -222,7 +230,7 @@ def diagonal(chess, file, rank, moves_list, piece_sign):
             break
 
         # Otherwise add the square
-        moves_list.append(result)
+        yield result
         # Reached an occupied square - proceed no further
         if chess.piece_sign(result) != constants.BLANK:
             break
@@ -239,7 +247,7 @@ def diagonal(chess, file, rank, moves_list, piece_sign):
             break
 
         # Otherwise add the square
-        moves_list.append(result)
+        yield result
         # Reached an occupied square - proceed no further
         if chess.piece_sign(result) != constants.BLANK:
             break
@@ -256,7 +264,7 @@ def diagonal(chess, file, rank, moves_list, piece_sign):
             break
 
         # Otherwise add the square
-        moves_list.append(result)
+        yield result
         # Reached an occupied square - proceed no further
         if chess.piece_sign(result) != constants.BLANK:
             break
@@ -273,12 +281,10 @@ def diagonal(chess, file, rank, moves_list, piece_sign):
             break
 
         # Otherwise add the square
-        moves_list.append(result)
+        yield result
         # Reached an occupied square - proceed no further
         if chess.piece_sign(result) != constants.BLANK:
             break
-
-    return moves_list
 
 
 def generate_moves_for_pawn(chess, file, rank,
@@ -397,7 +403,7 @@ def generate_moves_for_bishop(chess, file, rank,
     Generate all the possible moves of the Bishop piece
     The legality of the moves are checked later
     """
-    return diagonal(chess, file, rank, moves_list, piece_sign)
+    return diagonal(chess, file, rank, piece_sign)
 
 
 def generate_moves_for_queen(chess, file, rank,
@@ -406,7 +412,7 @@ def generate_moves_for_queen(chess, file, rank,
     Generate all the possible moves of the Queen piece
     The legality of the moves are checked later
     """
-    moves_list = diagonal(chess, file, rank, moves_list, piece_sign)
+    moves_list = diagonal(chess, file, rank, piece_sign)
     moves_list.extend(horizontal_vertical(chess, file, rank, piece_sign))
     return moves_list
 
