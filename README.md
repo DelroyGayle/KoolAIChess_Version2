@@ -19,10 +19,19 @@ However, *'List Comprehensions can be faster than For Loops* because they are op
 
 Therefore, using List Comprehensions would be the first step in increasing the speed of *Kool AI*.
 
+## Bitboards Strategy
+
+I came across the following tutorial [Let's Build: Chess Engine](https://www.youtube.com/watch?v=1QotIA4_jb4) by Wes Doyle.
+In this tutorial, he builds a chess engine from scratch using Python. He uses *bitboards*. 
+* Bitboards are an efficient way to store game state in 64-bit integers. There are 64 positions on a chess board so we can use each bit as an on/off switch. 
+* One can use *bitwise* operations on these numbers to manipulate individual bits using operators like AND, OR, XOR, NOT, and bit shifts.
+* A mask is a bitboard used to isolate, modify, or test specific squares using bitwise operations.
+* The strategy is to use masks and bitwise operations. This would be a **much faster** method of determining chess moves and chess attacks<br> *without* the need for *loops*. 
+* Hence, my chess engine using this methodology should run much faster! 
+
 ------
 
 ## Future Features
-* Attempt to speed up the program by using a library such as [itertools](https://docs.python.org/3/library/itertools.html)
 * The ability to switch sides
 * Undo/Redo ability when playing moves
 * Saving board positions during the game
@@ -77,4 +86,6 @@ Goodbye<br>
 Please refer to [README](README_FOR_VERSION1.md).
         
 ## Acknowledgements    
-Please refer to [README](README_FOR_VERSION1.md).
+I would like to acknowledge [Wes Doyle](https://www.youtube.com/@WesDoyle), and his tutorial [Let's Build: Chess Engine](https://www.youtube.com/watch?v=1QotIA4_jb4) on which my usage of *bitboards* is based on.<br>
+Wes Doyle's **Wake Engine** is available [here](https://github.com/wesdoyle/wake_engine).<p>
+Please refer to [README](README_FOR_VERSION1.md) for other acknowledgements.

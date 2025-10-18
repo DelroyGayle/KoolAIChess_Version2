@@ -966,7 +966,7 @@ def determine_move_both_file_rank(chess):
 
     # Defensive Programming
     raise CustomException("Internal Error: Unknown Move Type "
-                           f"{Game.move_type}")
+                          f"{Game.move_type}")
 
 
 def handle_move_text(chess):

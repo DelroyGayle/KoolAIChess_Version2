@@ -198,6 +198,7 @@ def check_diagonally(chess, basefile, baserank,
     # Either an opponent piece or a blank square
     return newfile + newrank
 
+
 def diagonal(chess, file, rank, piece_sign):
     """
     Record blank squares or an opponent's square
