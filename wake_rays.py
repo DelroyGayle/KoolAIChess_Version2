@@ -8,7 +8,7 @@ for sliding pieces (rooks, bishops, queens) on an otherwise empty board.
 import numpy as np
 
 from wake_constants import File, ONE_BIT
-from core import clear_bit
+from wake_core import clear_bit
 
 
 def get_south_ray(bitboard: np.uint64, from_square: int) -> np.uint64:

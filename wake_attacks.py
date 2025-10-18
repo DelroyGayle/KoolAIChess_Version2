@@ -9,8 +9,8 @@ and non-sliding pieces (king, knight, pawn).
 import numpy as np
 
 from wake_constants import File, ONE_BIT, Rank
-from .core import make_uint64, clear_bit, set_bit
-from .rays import (
+from wake_core import make_uint64, clear_bit, set_bit
+from wake_rays import (
     get_north_ray,
     get_south_ray,
     get_east_ray,
