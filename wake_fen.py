@@ -7,81 +7,83 @@ def generate_fen(position) -> str:
     """
     Generates an FEN given the provided Position
     """
-    black_pawn_bin = np.binary_repr(position.board.black_P_bb, 64)
-    black_rook_bin = np.binary_repr(position.board.black_R_bb, 64)
-    black_knight_bin = np.binary_repr(position.board.black_N_bb, 64)
-    black_bishop_bin = np.binary_repr(position.board.black_B_bb, 64)
-    black_queen_bin = np.binary_repr(position.board.black_Q_bb, 64)
-    black_king_bin = np.binary_repr(position.board.black_K_bb, 64)
-    white_pawn_bin = np.binary_repr(position.board.white_P_bb, 64)
-    white_rook_bin = np.binary_repr(position.board.white_R_bb, 64)
-    white_knight_bin = np.binary_repr(position.board.white_N_bb, 64)
-    white_bishop_bin = np.binary_repr(position.board.white_B_bb, 64)
-    white_queen_bin = np.binary_repr(position.board.white_Q_bb, 64)
-    white_king_bin = np.binary_repr(position.board.white_K_bb, 64)
+    computer_pawn_bin = np.binary_repr(position.board.computer_P_bb, 64)
+    computer_rook_bin = np.binary_repr(position.board.computer_R_bb, 64)
+    computer_knight_bin = np.binary_repr(position.board.computer_N_bb, 64)
+    computer_bishop_bin = np.binary_repr(position.board.computer_B_bb, 64)
+    computer_queen_bin = np.binary_repr(position.board.computer_Q_bb, 64)
+    computer_king_bin = np.binary_repr(position.board.computer_K_bb, 64)
+    player_pawn_bin = np.binary_repr(position.board.player_P_bb, 64)
+    player_rook_bin = np.binary_repr(position.board.player_R_bb, 64)
+    player_knight_bin = np.binary_repr(position.board.player_N_bb, 64)
+    player_bishop_bin = np.binary_repr(position.board.player_B_bb, 64)
+    player_queen_bin = np.binary_repr(position.board.player_Q_bb, 64)
+    player_king_bin = np.binary_repr(position.board.player_K_bb, 64)
 
-    black_pawn_squares = [
-        i for i in range(len(black_pawn_bin)) if int(black_pawn_bin[i])
+    computer_pawn_squares = [
+        i for i in range(len(computer_pawn_bin)) if int(computer_pawn_bin[i])
     ]
-    black_rook_squares = [
-        i for i in range(len(black_rook_bin)) if int(black_rook_bin[i])
+    computer_rook_squares = [
+        i for i in range(len(computer_rook_bin)) if int(computer_rook_bin[i])
     ]
-    black_knight_squares = [
-        i for i in range(len(black_knight_bin)) if int(black_knight_bin[i])
+    computer_knight_squares = [
+        i for i in range(len(computer_knight_bin))
+        if int(computer_knight_bin[i])
     ]
-    black_bishop_squares = [
-        i for i in range(len(black_bishop_bin)) if int(black_bishop_bin[i])
+    computer_bishop_squares = [
+        i for i in range(len(computer_bishop_bin))
+        if int(computer_bishop_bin[i])
     ]
-    black_queen_squares = [
-        i for i in range(len(black_queen_bin)) if int(black_queen_bin[i])
+    computer_queen_squares = [
+        i for i in range(len(computer_queen_bin)) if int(computer_queen_bin[i])
     ]
-    black_king_square = [
-        i for i in range(len(black_king_bin)) if int(black_king_bin[i])
+    computer_king_square = [
+        i for i in range(len(computer_king_bin)) if int(computer_king_bin[i])
     ]
-    white_pawn_squares = [
-        i for i in range(len(white_pawn_bin)) if int(white_pawn_bin[i])
+    player_pawn_squares = [
+        i for i in range(len(player_pawn_bin)) if int(player_pawn_bin[i])
     ]
-    white_rook_squares = [
-        i for i in range(len(white_rook_bin)) if int(white_rook_bin[i])
+    player_rook_squares = [
+        i for i in range(len(player_rook_bin)) if int(player_rook_bin[i])
     ]
-    white_knight_squares = [
-        i for i in range(len(white_knight_bin)) if int(white_knight_bin[i])
+    player_knight_squares = [
+        i for i in range(len(player_knight_bin)) if int(player_knight_bin[i])
     ]
-    white_bishop_squares = [
-        i for i in range(len(white_bishop_bin)) if int(white_bishop_bin[i])
+    player_bishop_squares = [
+        i for i in range(len(player_bishop_bin)) if int(player_bishop_bin[i])
     ]
-    white_queen_squares = [
-        i for i in range(len(white_queen_bin)) if int(white_queen_bin[i])
+    player_queen_squares = [
+        i for i in range(len(player_queen_bin)) if int(player_queen_bin[i])
     ]
-    white_king_square = [
-        i for i in range(len(white_king_bin)) if int(white_king_bin[i])
+    player_king_square = [
+        i for i in range(len(player_king_bin)) if int(player_king_bin[i])
     ]
 
     fen_dict = {i: None for i in range(64)}
 
-    for s in black_pawn_squares:
+    for s in computer_pawn_squares:
         fen_dict[s] = "p"
-    for s in black_rook_squares:
+    for s in computer_rook_squares:
         fen_dict[s] = "r"
-    for s in black_knight_squares:
+    for s in computer_knight_squares:
         fen_dict[s] = "n"
-    for s in black_bishop_squares:
+    for s in computer_bishop_squares:
         fen_dict[s] = "b"
-    for s in black_queen_squares:
+    for s in computer_queen_squares:
         fen_dict[s] = "q"
-    for s in black_king_square:
+    for s in computer_king_square:
         fen_dict[s] = "k"
-    for s in white_pawn_squares:
+    for s in player_pawn_squares:
         fen_dict[s] = "P"
-    for s in white_rook_squares:
+    for s in player_rook_squares:
         fen_dict[s] = "R"
-    for s in white_knight_squares:
+    for s in player_knight_squares:
         fen_dict[s] = "N"
-    for s in white_bishop_squares:
+    for s in player_bishop_squares:
         fen_dict[s] = "B"
-    for s in white_queen_squares:
+    for s in player_queen_squares:
         fen_dict[s] = "Q"
-    for s in white_king_square:
+    for s in player_king_square:
         fen_dict[s] = "K"
 
     fen = ""

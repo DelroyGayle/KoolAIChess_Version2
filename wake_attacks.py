@@ -192,13 +192,13 @@ def generate_king_attack_bb_from_square(from_square: int) -> np.uint64:
 def generate_player_pawn_attack_bb_from_square(from_square: int) -> np.uint64:
     """
     Generates a static bitboard of squares attacked by
-    a PLAYER'S (white) pawn from the provided `square`
+    rival PLAYER (white) pawn from the provided `square`
 
-    :param from_square: square index of the PLAYER'S pawn from which
+    :param from_square: square index of the PLAYER pawn from which
                         to generate attack squares bitboard
 
     :return: np.uint64 bitboard of attacked squares
-             by a PLAYER'S pawn on the provided `square`
+             by a PLAYER pawn on the provided `square`
     """
     attack_bb = make_uint64()
     for i in [7, 9]:
@@ -219,13 +219,13 @@ def generate_computer_pawn_attack_bb_from_square(
 ) -> np.uint64:
     """
     Generates a static bitboard of squares attacked by
-    a COMPUTER'S (black) pawn from the provided `square`
+    rival COMPUTER (black) pawn from the provided `square`
 
-    :param from_square: square index of the COMPUTER'S pawn
+    :param from_square: square index of the COMPUTER pawn
                         from which to generate attack squares bitboard
 
     :return: np.uint64 bitboard of attacked squares
-             by a COMPUTER'S pawn on the provided `square`
+             by a COMPUTER pawn on the provided `square`
     """
     attack_bb = make_uint64()
     for i in [-7, -9]:
@@ -243,13 +243,13 @@ def generate_computer_pawn_attack_bb_from_square(
 
 def generate_player_pawn_motion_bb_from_square(from_square: int) -> np.uint64:
     """
-    Returns the PLAYER'S (white) pawn motion bitboard
+    Returns the rival PLAYER (white) pawn motion bitboard
     on an otherwise empty board from the provided square
 
     :param from_square: starting square
-                        from which to generate the PLAYER'S pawn motions
+                        from which to generate the PLAYER pawn motions
 
-    :return: np.uint64 bitboard representation of the PLAYER'S pawn motions
+    :return: np.uint64 bitboard representation of the PLAYER pawn motions
              on an otherwise empty board
     """
     motion_bb = make_uint64()
@@ -268,13 +268,13 @@ def generate_computer_pawn_motion_bb_from_square(
     from_square: int
 ) -> np.uint64:
     """
-    Returns the COMPUTER'S (black) pawn motion bitboard
+    Returns the rival COMPUTER (black) pawn motion bitboard
     on an otherwise empty board from the provided square
 
     :param from_square: starting square from which
-                        to generate COMPUTER'S pawn motions
+                        to generate COMPUTER pawn motions
 
-    :return: np.uint64 bitboard representation of COMPUTER'S pawn motions
+    :return: np.uint64 bitboard representation of COMPUTER pawn motions
              on an otherwise empty board
     """
     motion_bb = make_uint64()
