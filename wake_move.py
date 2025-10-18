@@ -1,4 +1,4 @@
-from wake_constants import Piece
+from wake_constants import Piece, Rival
 
 
 class Move:
@@ -21,10 +21,10 @@ class Move:
         self.promote_to = None
 
     @property
-    def color(self):
-        if self.piece in Piece.white_pieces:
-            return 0
-        return 1
+    def rival_piece(self):
+        if self.piece in Piece.PLAYER_PIECES:
+            return Rival.PLAYER
+        return Rival.COMPUTER
 
 
 class MoveResult:

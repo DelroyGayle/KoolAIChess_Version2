@@ -16,10 +16,10 @@ from wake_attacks import (
     generate_king_attack_bb_from_square,
     generate_queen_attack_bb_from_square,
     generate_rook_attack_bb_from_square,
-    generate_white_pawn_attack_bb_from_square,
-    generate_black_pawn_attack_bb_from_square,
-    generate_white_pawn_motion_bb_from_square,
-    generate_black_pawn_motion_bb_from_square,
+    generate_player_pawn_attack_bb_from_square,
+    generate_computer_pawn_attack_bb_from_square,
+    generate_player_pawn_motion_bb_from_square,
+    generate_computer_pawn_motion_bb_from_square,
 )
 
 
@@ -121,57 +121,61 @@ def make_rook_attack_bbs() -> dict:
     return rook_attack_map
 
 
-def make_white_pawn_attack_bbs() -> dict:
+def make_player_pawn_attack_bbs() -> dict:
     """
     Builds a Python dictionary of { square_index: bitboard }
-    to represent static white pawn attack patterns
+    to represent static PLAYER (white) pawn attack patterns
 
-    :return: dict {square: white pawn attack bitboard} static square
+    :return: dict {square: PLAYER pawn attack bitboard} static square
                  -> bitboard mapping
     """
-    white_pawn_attack_map = {}
+    player_pawn_attack_map = {}
     for i in range(Square.A2, Square.A8):
-        white_pawn_attack_map[i] = generate_white_pawn_attack_bb_from_square(i)
-    return white_pawn_attack_map
+        player_pawn_attack_map[i] = (
+            generate_player_pawn_attack_bb_from_square(i))
+    return player_pawn_attack_map
 
 
-def make_black_pawn_attack_bbs() -> dict:
+def make_computer_pawn_attack_bbs() -> dict:
     """
     Builds a Python dictionary of { square_index: bitboard }
-    to represent static black pawn attack patterns
+    to represent static COMPUTER (black) pawn attack patterns
 
-    :return: dict {square: black pawn attack bitboard} static square
+    :return: dict {square: COMPUTER pawn attack bitboard} static square
                  -> bitboard mapping
     """
-    black_pawn_attack_map = {}
+    computer_pawn_attack_map = {}
     for i in range(Square.A2, Square.A8):
-        black_pawn_attack_map[i] = generate_black_pawn_attack_bb_from_square(i)
-    return black_pawn_attack_map
+        computer_pawn_attack_map[i] = (
+            generate_computer_pawn_attack_bb_from_square(i))
+    return computer_pawn_attack_map
 
 
-def make_white_pawn_motion_bbs() -> dict:
+def make_player_pawn_motion_bbs() -> dict:
     """
     Builds a Python dictionary of { square_index: bitboard }
-    to represent static white pawn motion patterns
+    to represent static PLAYER (white) pawn motion patterns
 
-    :return: dict {square: white pawn motion bitboard} static square
+    :return: dict {square: PLAYER pawn motion bitboard} static square
                  -> bitboard mapping
     """
-    white_pawn_motion_map = {}
+    player_pawn_motion_map = {}
     for i in range(Square.A2, Square.A8):
-        white_pawn_motion_map[i] = generate_white_pawn_motion_bb_from_square(i)
-    return white_pawn_motion_map
+        player_pawn_motion_map[i] = (
+            generate_player_pawn_motion_bb_from_square(i))
+    return player_pawn_motion_map
 
 
-def make_black_pawn_motion_bbs() -> dict:
+def make_computer_pawn_motion_bbs() -> dict:
     """
     Builds a Python dictionary of { square_index: bitboard }
-    to represent static black pawn motion patterns
+    to represent static COMPUTER (black) pawn motion patterns
 
-    :return: dict {square: black pawn motion bitboard} static square
+    :return: dict {square: COMPUTER pawn motion bitboard} static square
                  -> bitboard mapping
     """
-    black_pawn_motion_map = {}
+    computer_pawn_motion_map = {}
     for i in range(Square.A2, Square.A8):
-        black_pawn_motion_map[i] = generate_black_pawn_motion_bb_from_square(i)
-    return black_pawn_motion_map
+        computer_pawn_motion_map[i] = (
+            generate_computer_pawn_motion_bb_from_square(i))
+    return computer_pawn_motion_map

@@ -1,6 +1,6 @@
 import numpy as np
 
-from wake_constants import Rival, square_map
+from wake_constants import Rival, SQUARE_MAP
 
 
 def generate_fen(position) -> str:
@@ -138,7 +138,7 @@ def generate_fen(position) -> str:
     fen += " "
 
     if position.en_passant_target:
-        fen += str(square_map[position.en_passant_target])
+        fen += str(SQUARE_MAP[position.en_passant_target])
     else:
         fen += "-"
 

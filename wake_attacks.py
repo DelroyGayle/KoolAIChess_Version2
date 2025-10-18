@@ -47,9 +47,9 @@ def generate_knight_attack_bb_from_square(from_square: int) -> np.uint64:
         attack_bb |= set_bit(attack_bb, to_square)
         # Mask of wrapping
         if from_square in (File.B | File.A):
-            attack_bb &= ~(np.uint64(File.hexG | File.hexH))
+            attack_bb &= ~(np.uint64(File.HEX_G | File.HEX_H))
         if from_square in (File.G | File.H):
-            attack_bb &= ~(np.uint64(File.hexA | File.hexB))
+            attack_bb &= ~(np.uint64(File.HEX_A | File.HEX_B))
     return attack_bb
 
 
@@ -178,9 +178,9 @@ def generate_king_attack_bb_from_square(from_square: int) -> np.uint64:
         attack_bb |= ONE_BIT << np.uint64(to_square)
     # Mask of wrapping
     if from_square in File.A:
-        attack_bb &= ~np.uint64(File.hexH)
+        attack_bb &= ~np.uint64(File.HEX_H)
     if from_square in File.H:
-        attack_bb &= ~np.uint64(File.hexA)
+        attack_bb &= ~np.uint64(File.HEX_A)
     return attack_bb
 
 
@@ -189,16 +189,16 @@ def generate_king_attack_bb_from_square(from_square: int) -> np.uint64:
 # -------------------------------------------------------------
 
 
-def generate_white_pawn_attack_bb_from_square(from_square: int) -> np.uint64:
+def generate_player_pawn_attack_bb_from_square(from_square: int) -> np.uint64:
     """
     Generates a static bitboard of squares attacked by
-    a white pawn from the provided `square`
+    a PLAYER'S (white) pawn from the provided `square`
 
-    :param from_square: square index of the white pawn from which
+    :param from_square: square index of the PLAYER'S pawn from which
                         to generate attack squares bitboard
 
     :return: np.uint64 bitboard of attacked squares
-             by a white pawn on the provided `square`
+             by a PLAYER'S pawn on the provided `square`
     """
     attack_bb = make_uint64()
     for i in [7, 9]:
@@ -208,22 +208,24 @@ def generate_white_pawn_attack_bb_from_square(from_square: int) -> np.uint64:
         attack_bb |= ONE_BIT << np.uint64(to_square)
     # Mask of wrapping
     if from_square in File.A:
-        attack_bb &= ~np.uint64(File.hexH)
+        attack_bb &= ~np.uint64(File.HEX_H)
     if from_square in File.H:
-        attack_bb &= ~np.uint64(File.hexA)
+        attack_bb &= ~np.uint64(File.HEX_A)
     return attack_bb
 
 
-def generate_black_pawn_attack_bb_from_square(from_square: int) -> np.uint64:
+def generate_computer_pawn_attack_bb_from_square(
+    from_square: int
+) -> np.uint64:
     """
-    Generates a static bitboard of squares attacked by a black pawn
-    from the provided `square`
+    Generates a static bitboard of squares attacked by
+    a COMPUTER'S (black) pawn from the provided `square`
 
-    :param from_square: square index of the black pawn
+    :param from_square: square index of the COMPUTER'S pawn
                         from which to generate attack squares bitboard
 
     :return: np.uint64 bitboard of attacked squares
-             by a black pawn on the provided `square`
+             by a COMPUTER'S pawn on the provided `square`
     """
     attack_bb = make_uint64()
     for i in [-7, -9]:
@@ -233,53 +235,55 @@ def generate_black_pawn_attack_bb_from_square(from_square: int) -> np.uint64:
         attack_bb |= ONE_BIT << np.uint64(to_square)
     # Mask of wrapping
     if from_square in File.A:
-        attack_bb &= ~np.uint64(File.hexH)
+        attack_bb &= ~np.uint64(File.HEX_H)
     if from_square in File.H:
-        attack_bb &= ~np.uint64(File.hexA)
+        attack_bb &= ~np.uint64(File.HEX_A)
     return attack_bb
 
 
-def generate_white_pawn_motion_bb_from_square(from_square: int) -> np.uint64:
+def generate_player_pawn_motion_bb_from_square(from_square: int) -> np.uint64:
     """
-    Returns the white pawn motion bitboard
+    Returns the PLAYER'S (white) pawn motion bitboard
     on an otherwise empty board from the provided square
 
     :param from_square: starting square
-                        from which to generate white pawn motions
+                        from which to generate the PLAYER'S pawn motions
 
-    :return: np.uint64 bitboard representation of white pawn motions
+    :return: np.uint64 bitboard representation of the PLAYER'S pawn motions
              on an otherwise empty board
     """
     motion_bb = make_uint64()
 
-    # Check boundary - white pawns can't move beyond 8th rank
+    # Check boundary - white pawns cannot move beyond the 8th rank
     if from_square >= 56:  # 8th rank
         return motion_bb
 
     motion_bb |= ONE_BIT << np.uint64(from_square + 8)
-    if from_square in Rank.x2:
+    if from_square in Rank.X2:
         motion_bb |= ONE_BIT << np.uint64(from_square + 16)
     return motion_bb
 
 
-def generate_black_pawn_motion_bb_from_square(from_square: int) -> np.uint64:
+def generate_computer_pawn_motion_bb_from_square(
+    from_square: int
+) -> np.uint64:
     """
-    Returns the black pawn motion bitboard
+    Returns the COMPUTER'S (black) pawn motion bitboard
     on an otherwise empty board from the provided square
 
     :param from_square: starting square from which
-                        to generate black pawn motions
+                        to generate COMPUTER'S pawn motions
 
-    :return: np.uint64 bitboard representation of black pawn motions
+    :return: np.uint64 bitboard representation of COMPUTER'S pawn motions
              on an otherwise empty board
     """
     motion_bb = make_uint64()
 
-    # Check boundary - black pawns can't move beyond 1st rank
+    # Check boundary - black pawns cannot move beyond the 1st rank
     if from_square < 8:  # 1st rank
         return motion_bb
 
     motion_bb |= ONE_BIT << np.uint64(from_square - 8)
-    if from_square in Rank.x7:
+    if from_square in Rank.X7:
         motion_bb |= ONE_BIT << np.uint64(from_square - 16)
     return motion_bb

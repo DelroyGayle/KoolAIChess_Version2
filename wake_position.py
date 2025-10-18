@@ -642,10 +642,10 @@ class Position:
         if move.piece not in {Piece.wP, Piece.bP}:
             return None
         if move.rival == Rival.PLAYER:
-            if move.to_sq in Rank.x4 and move.from_sq in Rank.x2:
+            if move.to_sq in Rank.X4 and move.from_sq in Rank.X2:
                 return move.to_sq - 8
         if move.rival == Rival.COMPUTER:
-            if move.to_sq in Rank.x5 and move.from_sq in Rank.x7:
+            if move.to_sq in Rank.X5 and move.from_sq in Rank.X7:
                 return move.to_sq + 8
 
     def is_capture(self, move):
@@ -886,9 +886,9 @@ class Position:
         return False
 
     def is_promotion(self, pawn_move):
-        if pawn_move.color == Rival.PLAYER and pawn_move.to_sq in Rank.x8:
+        if pawn_move.color == Rival.PLAYER and pawn_move.to_sq in Rank.X8:
             return True
-        if pawn_move.color == Rival.COMPUTER and pawn_move.to_sq in Rank.x1:
+        if pawn_move.color == Rival.COMPUTER and pawn_move.to_sq in Rank.X1:
             return True
         return False
 
@@ -1310,7 +1310,7 @@ class Position:
             kingside_blocked = (
                 self.black_attacked_squares
                 | (self.board.white_pieces_bb & ~self.board.white_K_bb)
-            ) & CastleRoute.WhiteKingside
+            ) & CastleRoute.PLAYER_KINGSIDE
             queenside_blocked = (
                 self.black_attacked_squares
                 | (self.board.white_pieces_bb & ~self.board.white_K_bb)

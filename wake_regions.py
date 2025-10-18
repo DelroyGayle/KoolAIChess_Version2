@@ -17,35 +17,35 @@ from wake_constants import Rank, File, DARK_SQUARES, LIGHT_SQUARES
 
 
 def rank_8_bb() -> np.uint64:
-    return np.uint64(Rank.hex8)
+    return np.uint64(Rank.HEX_8)
 
 
 def rank_7_bb() -> np.uint64:
-    return np.uint64(Rank.hex7)
+    return np.uint64(Rank.HEX_7)
 
 
 def rank_6_bb() -> np.uint64:
-    return np.uint64(Rank.hex6)
+    return np.uint64(Rank.HEX_6)
 
 
 def rank_5_bb() -> np.uint64:
-    return np.uint64(Rank.hex5)
+    return np.uint64(Rank.HEX_5)
 
 
 def rank_4_bb() -> np.uint64:
-    return np.uint64(Rank.hex4)
+    return np.uint64(Rank.HEX_4)
 
 
 def rank_3_bb() -> np.uint64:
-    return np.uint64(Rank.hex3)
+    return np.uint64(Rank.HEX_3)
 
 
 def rank_2_bb() -> np.uint64:
-    return np.uint64(Rank.hex2)
+    return np.uint64(Rank.HEX_2)
 
 
 def rank_1_bb() -> np.uint64:
-    return np.uint64(Rank.hex1)
+    return np.uint64(Rank.HEX_1)
 
 
 # -------------------------------------------------------------
@@ -54,35 +54,35 @@ def rank_1_bb() -> np.uint64:
 
 
 def file_h_bb() -> np.uint64:
-    return np.uint64(File.hexH)
+    return np.uint64(File.HEX_H)
 
 
 def file_g_bb() -> np.uint64:
-    return np.uint64(File.hexG)
+    return np.uint64(File.HEX_G)
 
 
 def file_f_bb() -> np.uint64:
-    return np.uint64(File.hexF)
+    return np.uint64(File.HEX_F)
 
 
 def file_e_bb() -> np.uint64:
-    return np.uint64(File.hexE)
+    return np.uint64(File.HEX_E)
 
 
 def file_d_bb() -> np.uint64:
-    return np.uint64(File.hexD)
+    return np.uint64(File.HEX_D)
 
 
 def file_c_bb() -> np.uint64:
-    return np.uint64(File.hexC)
+    return np.uint64(File.HEX_C)
 
 
 def file_b_bb() -> np.uint64:
-    return np.uint64(File.hexB)
+    return np.uint64(File.HEX_B)
 
 
 def file_a_bb() -> np.uint64:
-    return np.uint64(File.hexA)
+    return np.uint64(File.HEX_A)
 
 
 # -------------------------------------------------------------

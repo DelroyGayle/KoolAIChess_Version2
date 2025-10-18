@@ -80,7 +80,7 @@ class Square:
     H8 = np.uint64(63)
 
 
-square_map = {
+SQUARE_MAP = {
     0: "a1",
     1: "b1",
     2: "c1",
@@ -147,7 +147,7 @@ square_map = {
     63: "h8",
 }
 
-algebraic_square_map = {
+ALGEBRAIC_SQUARE_MAP = {
     "a1": 0,
     "b1": 1,
     "c1": 2,
@@ -225,45 +225,45 @@ class File:
     G = {6, 14, 22, 30, 38, 46, 54, 62}
     H = {7, 15, 23, 31, 39, 47, 55, 63}
 
-    hexA = np.uint64(0x0101010101010101)
-    hexB = np.uint64(0x0202020202020202)
-    hexC = np.uint64(0x0404040404040404)
-    hexD = np.uint64(0x0808080808080808)
-    hexE = np.uint64(0x1010101010101010)
-    hexF = np.uint64(0x2020202020202020)
-    hexG = np.uint64(0x4040404040404040)
-    hexH = np.uint64(0x8080808080808080)
+    HEX_A = np.uint64(0x0101010101010101)
+    HEX_B = np.uint64(0x0202020202020202)
+    HEX_C = np.uint64(0x0404040404040404)
+    HEX_D = np.uint64(0x0808080808080808)
+    HEX_E = np.uint64(0x1010101010101010)
+    HEX_F = np.uint64(0x2020202020202020)
+    HEX_G = np.uint64(0x4040404040404040)
+    HEX_H = np.uint64(0x8080808080808080)
 
-    files = (A, B, C, D, E, F, G, H)
+    THE_FILES = (A, B, C, D, E, F, G, H)
 
 
 class CastleRoute:
-    WhiteKingside = np.uint64(0x70)  # E1,F1,G1
-    WhiteQueenside = np.uint64(0x1C)  # E1, D1, C1
-    BlackKingside = np.uint64(0x1C00000000000000)  # E8,F8,G8
-    BlackQueenside = np.uint64(0x7000000000000000)  # E8, D8, C8
+    PLAYER_KINGSIDE = np.uint64(0x70)  # E1,F1,G1
+    PLAYER_QUEENSIDE = np.uint64(0x1C)  # E1, D1, C1
+    COMPUTER_KINGSIDE = np.uint64(0x1C00000000000000)  # E8,F8,G8
+    COMPUTER_QUEENSIDE = np.uint64(0x7000000000000000)  # E8, D8, C8
 
 
 class Rank:
-    x1 = {0, 1, 2, 3, 4, 5, 6, 7}
-    x2 = {8, 9, 10, 11, 12, 13, 14, 15}
-    x3 = {16, 17, 18, 19, 20, 21, 22, 23}
-    x4 = {24, 25, 26, 27, 28, 29, 30, 31}
-    x5 = {32, 33, 34, 35, 36, 37, 38, 39}
-    x6 = {40, 41, 42, 43, 44, 45, 46, 47}
-    x7 = {48, 49, 50, 51, 52, 53, 54, 55}
-    x8 = {56, 57, 58, 59, 60, 61, 62, 63}
+    X1 = {0, 1, 2, 3, 4, 5, 6, 7}
+    X2 = {8, 9, 10, 11, 12, 13, 14, 15}
+    X3 = {16, 17, 18, 19, 20, 21, 22, 23}
+    X4 = {24, 25, 26, 27, 28, 29, 30, 31}
+    X5 = {32, 33, 34, 35, 36, 37, 38, 39}
+    X6 = {40, 41, 42, 43, 44, 45, 46, 47}
+    X7 = {48, 49, 50, 51, 52, 53, 54, 55}
+    X8 = {56, 57, 58, 59, 60, 61, 62, 63}
 
-    hex1 = np.uint64(0x00000000000000FF)
-    hex2 = np.uint64(0x000000000000FF00)
-    hex3 = np.uint64(0x0000000000FF0000)
-    hex4 = np.uint64(0x00000000FF000000)
-    hex5 = np.uint64(0x000000FF00000000)
-    hex6 = np.uint64(0x0000FF0000000000)
-    hex7 = np.uint64(0x00FF000000000000)
-    hex8 = np.uint64(0xFF00000000000000)
+    HEX_1 = np.uint64(0x00000000000000FF)
+    HEX_2 = np.uint64(0x000000000000FF00)
+    HEX_3 = np.uint64(0x0000000000FF0000)
+    HEX_4 = np.uint64(0x00000000FF000000)
+    HEX_5 = np.uint64(0x000000FF00000000)
+    HEX_6 = np.uint64(0x0000FF0000000000)
+    HEX_7 = np.uint64(0x00FF000000000000)
+    HEX_8 = np.uint64(0xFF00000000000000)
 
-    ranks = (x1, x2, x3, x4, x5, x6, x7, x8)
+    THE_RANKS = (X1, X2, X3, X4, X5, X6, X7, X8)
 
 
 class Rival:
@@ -288,8 +288,8 @@ class Piece:
     bQ = 11
     bK = 12
 
-    PLAYER_pieces = {wP, wR, wN, wB, wQ, wK}
-    COMPUTER_pieces = {bP, bR, bN, bB, bQ, bK}
+    PLAYER_PIECES = {wP, wR, wN, wB, wQ, wK}
+    COMPUTER_PIECES = {bP, bR, bN, bB, bQ, bK}
 
     PAWN = "pawn"
     ROOK = "rook"
@@ -299,7 +299,7 @@ class Piece:
     KING = "king"
 
 
-piece_to_glyph = {
+PIECE_TO_GLYPH = {
     Piece.wP: "♙",
     Piece.bP: "♟︎",
     Piece.wR: "♖",
@@ -314,7 +314,7 @@ piece_to_glyph = {
     Piece.bK: "♚",
 }
 
-piece_to_value = {
+PIECE_TO_VALUE = {
     Piece.wP: 1,
     Piece.bP: 1,
     Piece.wR: 5,
@@ -329,7 +329,7 @@ piece_to_value = {
     Piece.bK: np.inf,
 }
 
-user_promotion_input = {
+USER_PROMOTION_INPUT = {
     "queen": Piece.QUEEN,
     "q": Piece.QUEEN,
     "rook": Piece.ROOK,
@@ -365,4 +365,3 @@ THE_PIECE = 1
 # TODO
 YES = 1
 NO = 0
-
