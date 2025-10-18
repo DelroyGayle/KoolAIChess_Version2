@@ -341,14 +341,14 @@ user_promotion_input = {
     "b": Piece.BISHOP,
 }
 
-PLAYER_promotion_map = {
+PLAYER_PROMOTION_MAP = {
     Piece.QUEEN: Piece.wQ,
     Piece.ROOK: Piece.wR,
     Piece.KNIGHT: Piece.wN,
     Piece.BISHOP: Piece.wB,
 }
 
-COMPUTER_promotion_map = {
+COMPUTER_PROMOTION_MAP = {
     Piece.QUEEN: Piece.bQ,
     Piece.ROOK: Piece.bR,
     Piece.KNIGHT: Piece.bN,
@@ -357,3 +357,12 @@ COMPUTER_promotion_map = {
 
 UCI_INPUT_REGEX = (r"^([a-h]{1}[1-8]{1}){2}$|"
                    r"^([a-h]{1}[1-8]{1}){2}(?<=[8])([qnrb])$")
+
+KINGSIDE = 0
+QUEENSIDE = 1
+THE_ATTACK = 0
+THE_PIECE = 1
+# TODO
+YES = 1
+NO = 0
+

@@ -109,7 +109,7 @@ def generate_fen(position) -> str:
 
     side_to_move_map = {Rival.PLAYER: "w", Rival.COMPUTER: "b"}
 
-    fen += f" {side_to_move_map[position.color_to_move]}"
+    fen += f" {side_to_move_map[position.rival_to_move]}"
 
     w_castle_king = position.castle_rights[Rival.PLAYER][0] is True
     w_castle_queen = position.castle_rights[Rival.PLAYER][1] is True
