@@ -964,7 +964,7 @@ def determine_move_both_file_rank(chess):
                                               piece, source, target)
         return
 
-    # Defensive Programming
+    # Defensive Guard
     raise CustomException("Internal Error: Unknown Move Type "
                           f"{Game.move_type}")
 

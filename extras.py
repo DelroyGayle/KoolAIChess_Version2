@@ -449,7 +449,7 @@ def determine_generate_move_method(piece_letter):
     themethod = methods_dictionary.get(piece_letter, "Unknown letter: "
                                        + piece_letter)
 
-    # Defensive Programming
+    # Defensive Guard
     if isinstance(themethod, str):
         raise CustomException("Internal Error: " + themethod)
 

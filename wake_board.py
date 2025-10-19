@@ -14,6 +14,7 @@ from wake_core import (
     make_queen_attack_bbs,
 )
 from wake_constants import Piece, Rival, File
+from extras import CustomException
 
 
 class WakeBoard:
@@ -156,79 +157,85 @@ class WakeBoard:
     def update_position_bitboards(self, piece_map):
         for key, val in piece_map.items():
 
-            # PLAYER (White) Pieces
-            if key == Piece.wP:
-                self.player_P_bb = np.uint64(0)
-                for bit in val:
-                    self.player_P_bb |= (
-                        set_bit(self.player_P_bb, np.uint64(bit)))
+            match key:
+                # PLAYER (White) Pieces
+                case Piece.wP:
+                    self.player_P_bb = np.uint64(0)
+                    for bit in val:
+                        self.player_P_bb |= (
+                            set_bit(self.player_P_bb, np.uint64(bit)))
 
-            elif key == Piece.wR:
-                self.player_R_bb = np.uint64(0)
-                for bit in val:
-                    self.player_R_bb |= (
-                        set_bit(self.player_R_bb, np.uint64(bit)))
+                case Piece.wR:
+                    self.player_R_bb = np.uint64(0)
+                    for bit in val:
+                        self.player_R_bb |= (
+                            set_bit(self.player_R_bb, np.uint64(bit)))
 
-            elif key == Piece.wN:
-                self.player_N_bb = np.uint64(0)
-                for bit in val:
-                    self.player_N_bb |= (
-                        set_bit(self.player_N_bb, np.uint64(bit)))
+                case Piece.wN:
+                    self.player_N_bb = np.uint64(0)
+                    for bit in val:
+                        self.player_N_bb |= (
+                            set_bit(self.player_N_bb, np.uint64(bit)))
 
-            elif key == Piece.wB:
-                self.player_B_bb = np.uint64(0)
-                for bit in val:
-                    self.player_B_bb |= (
-                        set_bit(self.player_B_bb, np.uint64(bit)))
+                case Piece.wB:
+                    self.player_B_bb = np.uint64(0)
+                    for bit in val:
+                        self.player_B_bb |= (
+                            set_bit(self.player_B_bb, np.uint64(bit)))
 
-            elif key == Piece.wQ:
-                self.player_Q_bb = np.uint64(0)
-                for bit in val:
-                    self.player_Q_bb |= (
-                        set_bit(self.player_Q_bb, np.uint64(bit)))
+                case Piece.wQ:
+                    self.player_Q_bb = np.uint64(0)
+                    for bit in val:
+                        self.player_Q_bb |= (
+                            set_bit(self.player_Q_bb, np.uint64(bit)))
 
-            elif key == Piece.wK:
-                self.player_K_bb = np.uint64(0)
-                for bit in val:
-                    self.player_K_bb |= (
-                        set_bit(self.player_K_bb, np.uint64(bit)))
+                case Piece.wK:
+                    self.player_K_bb = np.uint64(0)
+                    for bit in val:
+                        self.player_K_bb |= (
+                            set_bit(self.player_K_bb, np.uint64(bit)))
 
-            # COMPUTER (Black) Pieces
-            if key == Piece.bP:
-                self.computer_P_bb = np.uint64(0)
-                for bit in val:
-                    self.computer_P_bb |= (
-                        set_bit(self.computer_P_bb, np.uint64(bit)))
+                # COMPUTER (Black) Pieces
+                case Piece.bP:
+                    self.computer_P_bb = np.uint64(0)
+                    for bit in val:
+                        self.computer_P_bb |= (
+                            set_bit(self.computer_P_bb, np.uint64(bit)))
 
-            elif key == Piece.bR:
-                self.computer_R_bb = np.uint64(0)
-                for bit in val:
-                    self.computer_R_bb |= (
-                        set_bit(self.computer_R_bb, np.uint64(bit)))
+                case Piece.bR:
+                    self.computer_R_bb = np.uint64(0)
+                    for bit in val:
+                        self.computer_R_bb |= (
+                            set_bit(self.computer_R_bb, np.uint64(bit)))
 
-            elif key == Piece.bN:
-                self.computer_N_bb = np.uint64(0)
-                for bit in val:
-                    self.computer_N_bb |= (
-                        set_bit(self.computer_N_bb, np.uint64(bit)))
+                case Piece.bN:
+                    self.computer_N_bb = np.uint64(0)
+                    for bit in val:
+                        self.computer_N_bb |= (
+                            set_bit(self.computer_N_bb, np.uint64(bit)))
 
-            elif key == Piece.bB:
-                self.computer_B_bb = np.uint64(0)
-                for bit in val:
-                    self.computer_B_bb |= (
-                        set_bit(self.computer_B_bb, np.uint64(bit)))
+                case Piece.bB:
+                    self.computer_B_bb = np.uint64(0)
+                    for bit in val:
+                        self.computer_B_bb |= (
+                            set_bit(self.computer_B_bb, np.uint64(bit)))
 
-            elif key == Piece.bQ:
-                self.computer_Q_bb = np.uint64(0)
-                for bit in val:
-                    self.computer_Q_bb |= (
-                        set_bit(self.computer_Q_bb, np.uint64(bit)))
+                case Piece.bQ:
+                    self.computer_Q_bb = np.uint64(0)
+                    for bit in val:
+                        self.computer_Q_bb |= (
+                            set_bit(self.computer_Q_bb, np.uint64(bit)))
 
-            elif key == Piece.bK:
-                self.computer_K_bb = np.uint64(0)
-                for bit in val:
-                    self.computer_K_bb |= (
-                        set_bit(self.computer_K_bb, np.uint64(bit)))
+                case Piece.bK:
+                    self.computer_K_bb = np.uint64(0)
+                    for bit in val:
+                        self.computer_K_bb |= (
+                            set_bit(self.computer_K_bb, np.uint64(bit)))
+
+                # Defensive Guard
+                case _:
+                  raise CustomException("Internal Error: Unknown Piece Type "
+                                        f"{str(key)}")
 
     # -------------------------------------------------------------
     #  SLIDING PIECE MOVEMENT

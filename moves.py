@@ -214,7 +214,7 @@ def does_value_match(chess, file, rank, number, test_value):
                                                       'test_value'
     """
     new_file = chr(ord(file) + number)
-    # Defensive Programming
+    # Defensive Guard
     if not ("a" <= new_file <= "h"):
         print("Castling Internal Error: File is Off-board "
               f"{new_file} = {file} + {number}")
@@ -403,7 +403,7 @@ def calculate_new_file(file, number):
     """
 
     new_file = chr(ord(file) + number)
-    # Defensive Programming
+    # Defensive Guard
     if not ("a" <= new_file <= "h"):
         raise CustomException(("Internal Error: File is Off-board "
                               f"{new_file} = {file} + {number}"))
@@ -849,7 +849,7 @@ def validate_and_perform_en_passant(chess, from_file, from_rank,
                                                from_file, from_rank,
                                                to_file, to_rank)
 
-    # Defensive Programming
+    # Defensive Guard
     # Add a failsafe just to:
     # 1) Double-check that the attacking piece is a pawn of the right colour
     if (chess.piece_value(from_file, from_rank) !=
