@@ -19,7 +19,7 @@ from wake_core import (
     make_uint64,
     generate_king_attack_bb_from_square,
     get_squares_from_bitboard,
-    pprint_bb,
+    switch_rival
 )
 from wake_board import Board
 from wake_constants import (
@@ -183,12 +183,12 @@ class Position:
     # MAKE MOVE
     # -------------------------------------------------------------
 
+    # TODO
     def make_move(self, move) -> MoveResult:
-
-        original_position = PositionState(copy.deepcopy(self.__dict__))
-
         if self.rival_to_move != move.rival:
             return self.make_illegal_move_result("Not your move!")
+
+        original_position = PositionState(copy.deepcopy(self.__dict__))
 
         if not self.is_legal_move(move):
             return self.make_illegal_move_result("Illegal move")
@@ -267,7 +267,7 @@ class Position:
             return self.make_draw_result()
 
         self.position_history.append(generate_fen(self))
-        self.rival_to_move = not self.rival_to_move
+        self.rival_to_move = switch_rival(self.rival_to_move)
 
         return self.make_move_result()
 
@@ -325,9 +325,10 @@ class Position:
             Rival.COMPUTER: self.computer_attacked_squares,
         }
 
+        not_rival_to_move = switch_rival(rival_to_move)
         king_attacks = (
             king_rival_map[rival_to_move][THE_ATTACK] &
-            ~attacked_squares[not rival_to_move]
+            ~attacked_squares[not_rival_to_move]
         )
         king_piece = king_rival_map[rival_to_move][THE_PIECE]
 
@@ -903,7 +904,7 @@ class Position:
         Gets the legal knight moves from the given Move instance
         :param move_from_sq:
         :param rival_to_move:
-        :return:
+        :return: filtered legal moves
         """
         legal_knight_moves = self.board.get_knight_attack_from(move_from_sq)
 
@@ -1233,7 +1234,7 @@ class Position:
     # -------------------------------------------------------------
 
     def update_legal_king_moves(self,
-                                move_from_square: int, rival_to_move: bool):
+                                move_from_square: int, rival_to_move: int):
         """
         Pseudo-Legal King Moves: one step in any direction
 
@@ -1259,11 +1260,12 @@ class Position:
             king_moves &= ~own_piece_targets
 
         # Handle Castling
-        can_castle = self.can_castle(rival_to_move)
+        can_castle_pair = self.can_castle(rival_to_move)
 
-        if can_castle[KINGSIDE] or can_castle[QUEENSIDE]:
+        if can_castle_pair[KINGSIDE] or can_castle_pair[QUEENSIDE]:
             king_moves |= self.add_castling_moves(king_moves,
-                                                  can_castle, rival_to_move)
+                                                  can_castle_pair,
+                                                  rival_to_move)
 
         if rival_to_move == Rival.PLAYER:
             self.player_king_attacks |= king_moves
@@ -1297,7 +1299,7 @@ class Position:
         """
         Returns a tuple of (bool, bool) can castle on (kingside, queenside)
         and can move through the castling squares without being in check.
-        :return: Tuple (bool, bool) if the rival_to_move has castling rights
+        :return: List (bool, bool) if the rival_to_move has castling rights
         and can move through the castling squares without being
         in check on (kingside, queenside)
         """

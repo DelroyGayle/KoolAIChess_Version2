@@ -9,6 +9,7 @@ This module provides fundamental bitboard operations including:
 """
 
 import numpy as np
+from constants import Rival
 
 # Constants
 BOARD_SIZE = 8
@@ -174,3 +175,12 @@ def clear_bit(bitboard: np.uint64, bit: int | np.uint64) -> np.uint64:
     :return: a copy of the bitboard with the specified `bit` set to 0
     """
     return bitboard & ~(np.uint64(1) << np.uint64(bit))
+
+# -------------------------------------------------------------
+# MISCELLANEOUS FUNCTIONS
+# -------------------------------------------------------------
+
+""" Miscellaneous functions """
+def switch_rival(rival: int) -> int:
+    return (Rival.COMPUTER if rival == Rival.PLAYER
+            else Rival.PLAYER)

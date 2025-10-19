@@ -26,7 +26,7 @@ class WakeGame:
         self.is_over = False
         self.score = [0, 0]
 
-        self.rival_to_move = {
+        self.whose_move = {
             Rival.PLAYER: "Player",
             Rival.COMPUTER: "Computer",
         }

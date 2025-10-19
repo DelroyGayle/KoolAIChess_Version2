@@ -1,4 +1,4 @@
-from wake_constants import Piece, Rival
+from wake_constants import Piece, Rival, FROM, TO
 
 
 class Move:
@@ -8,9 +8,9 @@ class Move:
 
     def __init__(self, piece=None, squares=None):
         self.piece = piece
-        if squares:
-            self.from_sq = squares[0]
-            self.to_sq = squares[1]
+        if squares is not None:
+            self.from_sq = squares[FROM]
+            self.to_sq = squares[TO]
         else:
             self.from_sq = None
             self.to_sq = None
