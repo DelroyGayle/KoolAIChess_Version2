@@ -805,6 +805,7 @@ def main_part2():
     chess = Game()
     wake_game = WakeGame()
 
+    # TODO - Test file handling with WakeEngine
     f.open_input_file()
 
     chess.fillboard()

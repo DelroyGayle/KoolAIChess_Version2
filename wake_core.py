@@ -180,7 +180,7 @@ def clear_bit(bitboard: np.uint64, bit: int | np.uint64) -> np.uint64:
 # MISCELLANEOUS FUNCTIONS
 # -------------------------------------------------------------
 
-""" Miscellaneous functions """
+
 def switch_rival(rival: int) -> int:
     return (Rival.COMPUTER if rival == Rival.PLAYER
             else Rival.PLAYER)

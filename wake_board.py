@@ -238,8 +238,8 @@ class WakeBoard:
 
                 # Defensive Guard
                 case _:
-                  raise CustomException("Internal Error: Unknown Piece Type "
-                                        f"{str(key)}")
+                    raise CustomException("Internal Error: Unknown Piece Type "
+                                          f"{str(key)}")
 
     # -------------------------------------------------------------
     #  SLIDING PIECE MOVEMENT
