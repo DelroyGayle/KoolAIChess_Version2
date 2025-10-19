@@ -9,7 +9,7 @@ and non-sliding pieces (king, knight, pawn).
 import numpy as np
 
 from wake_constants import File, ONE_BIT, Rank
-from wake_core import make_uint64, clear_bit, set_bit
+from wake_core import make_uint64_zero, clear_bit, set_bit
 from wake_rays import (
     get_north_ray,
     get_south_ray,
@@ -38,7 +38,7 @@ def generate_knight_attack_bb_from_square(from_square: int) -> np.uint64:
     :return: np.uint64 bitboard of attacked squares by a knight
              on the provided `square`
     """
-    attack_bb = make_uint64()
+    attack_bb = make_uint64_zero()
     for i in [6, 15, 17, 10, -6, -15, -17, -10]:
         to_square = from_square + i
         if not 0 <= to_square < 64:
@@ -67,7 +67,7 @@ def generate_rank_attack_bb_from_square(square: int) -> np.uint64:
 
     :return: np.uint64 rank attacks bitboard from the provided square
     """
-    attack_bb = make_uint64()
+    attack_bb = make_uint64_zero()
     attack_bb = get_north_ray(attack_bb, square)
     attack_bb = get_south_ray(attack_bb, square)
     attack_bb = clear_bit(attack_bb, square)
@@ -83,7 +83,7 @@ def generate_file_attack_bb_from_square(square: int) -> np.uint64:
 
     :return: np.uint64 file attacks bitboard from the provided square
     """
-    attack_bb = make_uint64()
+    attack_bb = make_uint64_zero()
     attack_bb = get_east_ray(attack_bb, square)
     attack_bb = get_west_ray(attack_bb, square)
     attack_bb = clear_bit(attack_bb, square)
@@ -119,7 +119,7 @@ def generate_diag_attack_bb_from_square(from_square: int) -> np.uint64:
 
     :return: np.uint64 diagonal attacks bitboard from the provided square
     """
-    attack_bb = make_uint64()
+    attack_bb = make_uint64_zero()
     original_square = from_square
 
     attack_bb = get_northeast_ray(attack_bb, from_square)
@@ -170,7 +170,7 @@ def generate_king_attack_bb_from_square(from_square: int) -> np.uint64:
     :return: np.uint64 bitboard of attacked squares by a king
              on the provided `square`
     """
-    attack_bb = make_uint64()
+    attack_bb = make_uint64_zero()
     for i in [-1, -7, -8, -9, 1, 7, 8, 9]:
         to_square = from_square + i
         if not 0 <= to_square < 64:
@@ -200,7 +200,7 @@ def generate_player_pawn_attack_bb_from_square(from_square: int) -> np.uint64:
     :return: np.uint64 bitboard of attacked squares
              by a PLAYER pawn on the provided `square`
     """
-    attack_bb = make_uint64()
+    attack_bb = make_uint64_zero()
     for i in [7, 9]:
         to_square = from_square + i
         if not 0 <= to_square < 64:
@@ -227,7 +227,7 @@ def generate_computer_pawn_attack_bb_from_square(
     :return: np.uint64 bitboard of attacked squares
              by a COMPUTER pawn on the provided `square`
     """
-    attack_bb = make_uint64()
+    attack_bb = make_uint64_zero()
     for i in [-7, -9]:
         to_square = from_square + i
         if not 0 <= to_square < 64:
@@ -252,7 +252,7 @@ def generate_player_pawn_motion_bb_from_square(from_square: int) -> np.uint64:
     :return: np.uint64 bitboard representation of the PLAYER pawn motions
              on an otherwise empty board
     """
-    motion_bb = make_uint64()
+    motion_bb = make_uint64_zero()
 
     # Check boundary - white pawns cannot move beyond the 8th rank
     if from_square >= 56:  # 8th rank
@@ -277,7 +277,7 @@ def generate_computer_pawn_motion_bb_from_square(
     :return: np.uint64 bitboard representation of COMPUTER pawn motions
              on an otherwise empty board
     """
-    motion_bb = make_uint64()
+    motion_bb = make_uint64_zero()
 
     # Check boundary - black pawns cannot move beyond the 1st rank
     if from_square < 8:  # 1st rank

@@ -16,7 +16,7 @@ BOARD_SIZE = 8
 BOARD_SQUARES = BOARD_SIZE**2
 
 
-def make_uint64() -> np.uint64:
+def make_uint64_zero() -> np.uint64:
     """
     :return: an np.uint64 zero
     """
@@ -159,7 +159,7 @@ def set_bit(bitboard: np.uint64, bit: int) -> np.uint64:
     to 1
 
     :param bitboard: np.uint64 number
-    :param bit: the binary index to turn hot
+    :param bit: the binary index to turn on
     :return: a copy of the bitboard with the specified `bit` set to 1
     """
     return np.uint64(bitboard | np.uint64(1) << np.uint64(bit))

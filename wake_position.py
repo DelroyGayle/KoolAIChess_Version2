@@ -2,6 +2,8 @@ import copy  # TODO RE copy/deepcopy
 
 import numpy as np
 
+from typing import Optional, Union
+
 from wake_constants import (KINGSIDE, QUEENSIDE,
                             THE_ATTACK, THE_PIECE)
 from wake_core import (
@@ -16,7 +18,7 @@ from wake_core import (
     get_east_ray,
     get_south_ray,
     get_west_ray,
-    make_uint64,
+    make_uint64_zero,
     generate_king_attack_bb_from_square,
     get_squares_from_bitboard,
     switch_rival
@@ -53,6 +55,7 @@ class PositionState:
 class Position:
     """
     Represents the internal state of a chess position
+    # TODO: position_state NEVER USED!
     """
 
     def __init__(self, board=None, position_state=None):
@@ -87,21 +90,21 @@ class Position:
         # Initialize mailbox after setting piece locations
         self.sync_mailbox_from_piece_map()
 
-        self.player_pawn_moves = make_uint64()
-        self.player_pawn_attacks = make_uint64()
-        self.player_rook_attacks = make_uint64()
-        self.player_knight_attacks = make_uint64()
-        self.player_bishop_attacks = make_uint64()
-        self.player_queen_attacks = make_uint64()
-        self.player_king_attacks = make_uint64()
+        self.player_pawn_moves = make_uint64_zero()
+        self.player_pawn_attacks = make_uint64_zero()
+        self.player_rook_attacks = make_uint64_zero()
+        self.player_knight_attacks = make_uint64_zero()
+        self.player_bishop_attacks = make_uint64_zero()
+        self.player_queen_attacks = make_uint64_zero()
+        self.player_king_attacks = make_uint64_zero()
 
-        self.computer_pawn_moves = make_uint64()
-        self.computer_pawn_attacks = make_uint64()
-        self.computer_rook_attacks = make_uint64()
-        self.computer_knight_attacks = make_uint64()
-        self.computer_bishop_attacks = make_uint64()
-        self.computer_queen_attacks = make_uint64()
-        self.computer_king_attacks = make_uint64()
+        self.computer_pawn_moves = make_uint64_zero()
+        self.computer_pawn_attacks = make_uint64_zero()
+        self.computer_rook_attacks = make_uint64_zero()
+        self.computer_knight_attacks = make_uint64_zero()
+        self.computer_bishop_attacks = make_uint64_zero()
+        self.computer_queen_attacks = make_uint64_zero()
+        self.computer_king_attacks = make_uint64_zero()
 
     def set_initial_piece_locations(self):
         # init all piece types with empty sets first
@@ -573,16 +576,16 @@ class Position:
         self.mailbox[to_sq] = rook_piece
 
     def reset_attack_bitboards(self):
-        self.player_rook_attacks = make_uint64()
-        self.computer_rook_attacks = make_uint64()
-        self.player_bishop_attacks = make_uint64()
-        self.computer_bishop_attacks = make_uint64()
-        self.player_knight_attacks = make_uint64()
-        self.computer_knight_attacks = make_uint64()
-        self.player_queen_attacks = make_uint64()
-        self.computer_queen_attacks = make_uint64()
-        self.player_king_attacks = make_uint64()
-        self.computer_king_attacks = make_uint64()
+        self.player_rook_attacks = make_uint64_zero()
+        self.computer_rook_attacks = make_uint64_zero()
+        self.player_bishop_attacks = make_uint64_zero()
+        self.computer_bishop_attacks = make_uint64_zero()
+        self.player_knight_attacks = make_uint64_zero()
+        self.computer_knight_attacks = make_uint64_zero()
+        self.player_queen_attacks = make_uint64_zero()
+        self.computer_queen_attacks = make_uint64_zero()
+        self.player_king_attacks = make_uint64_zero()
+        self.computer_king_attacks = make_uint64_zero()
 
     # -------------------------------------------------------------
     # MOVE LEGALITY CHECKING
@@ -607,11 +610,11 @@ class Position:
                 move.is_promotion = True
                 return True
 
-            en_passant_target = self.try_get_en_passant_target(move)
+            potential_en_passant_target = self.try_get_en_passant_target(move)
 
-            if en_passant_target:
+            if potential_en_passant_target is not None:
                 self.en_passant_side = move.rival
-                self.en_passant_target = int(en_passant_target)
+                self.en_passant_target = int(potential_en_passant_target)
 
             if move.to_sq == self.en_passant_target:
                 self.is_en_passant_capture = True
@@ -638,7 +641,8 @@ class Position:
                 move.is_castling = True
             return True
 
-    def try_get_en_passant_target(self, move):
+    # TODO 'move'
+    def try_get_en_passant_target(self, move) -> Optional[int | np.uint64]:
         if move.piece not in {Piece.wP, Piece.bP}:
             return None
         if move.rival == Rival.PLAYER:
@@ -647,9 +651,12 @@ class Position:
         if move.rival == Rival.COMPUTER:
             if move.to_sq in Rank.X5 and move.from_sq in Rank.X7:
                 return move.to_sq + 8
+        return None
 
     def is_capture(self, move):
-        moving_to_square_bb = set_bit(make_uint64(), move.to_sq)
+        """ Does position 'move.to_sq' intersect with any rival pawns? """
+
+        moving_to_square_bb = set_bit(make_uint64_zero(), move.to_sq)
 
         if move.rival == Rival.PLAYER:
             intersects = moving_to_square_bb & self.board.computer_pieces_bb
@@ -672,12 +679,13 @@ class Position:
         - the to square is an attack and intersects with opponent piece
                         or en passant target bitboard
         """
-        current_square_bb = set_bit(make_uint64(), move.from_sq)
-        moving_to_square_bb = set_bit(make_uint64(), move.to_sq)
-        en_passant_target = make_uint64()
+        current_square_bb = set_bit(make_uint64_zero(), move.from_sq)
+        moving_to_square_bb = set_bit(make_uint64_zero(), move.to_sq)
+        potential_en_passant_target = make_uint64_zero()
 
-        if self.en_passant_target:
-            en_passant_target = set_bit(make_uint64(), self.en_passant_target)
+        if self.en_passant_target is not None:
+            potential_en_passant_target = set_bit(make_uint64_zero(),
+                                                  self.en_passant_target)
 
         if move.piece == Piece.wP:
             if not (self.board.player_P_bb & current_square_bb):
@@ -697,7 +705,7 @@ class Position:
             if (move.from_sq == move.to_sq - 9 or
                move.from_sq == move.to_sq - 7):
                 if (self.player_pawn_attacks & moving_to_square_bb) & ~(
-                    self.board.computer_pieces_bb | en_passant_target
+                    self.board.computer_pieces_bb | potential_en_passant_target
                 ):
                     return False
             return True
@@ -720,7 +728,7 @@ class Position:
             if (move.from_sq == move.to_sq + 9
                or move.from_sq == move.to_sq + 7):
                 if (self.computer_pawn_attacks & moving_to_square_bb) & ~(
-                    self.board.player_pieces_bb | en_passant_target
+                    self.board.player_pieces_bb | potential_en_passant_target
                 ):
                     return False
             return True
@@ -730,13 +738,14 @@ class Position:
         Returns True if the given bishop move is legal - i.e.
         - the to move intersects with the bishop attack bitboard
         """
-        current_square_bb = set_bit(make_uint64(), move.from_sq)
+        current_square_bb = set_bit(make_uint64_zero(), move.from_sq)
         if move.piece == Piece.wB:
             if not (self.board.player_B_bb & current_square_bb):
                 return False
             if self.is_not_bishop_attack(move):
                 return False
             return True
+
         if move.piece == Piece.bB:
             if not (self.board.computer_B_bb & current_square_bb):
                 return False
@@ -745,13 +754,14 @@ class Position:
             return True
 
     def is_legal_rook_move(self, move: Move) -> bool:
-        current_square_bb = set_bit(make_uint64(), move.from_sq)
+        current_square_bb = set_bit(make_uint64_zero(), move.from_sq)
         if move.piece == Piece.wR:
             if not (self.board.player_R_bb & current_square_bb):
                 return False
             if self.is_not_rook_attack(move):
                 return False
             return True
+
         if move.piece == Piece.bR:
             if not (self.board.computer_R_bb & current_square_bb):
                 return False
@@ -760,13 +770,14 @@ class Position:
             return True
 
     def is_legal_knight_move(self, move):
-        current_square_bb = set_bit(make_uint64(), move.from_sq)
+        current_square_bb = set_bit(make_uint64_zero(), move.from_sq)
         if move.piece == Piece.wN:
             if not (self.board.player_N_bb & current_square_bb):
                 return False
             if self.is_not_knight_attack(move):
                 return False
             return True
+
         if move.piece == Piece.bN:
             if not (self.board.computer_N_bb & current_square_bb):
                 return False
@@ -775,13 +786,14 @@ class Position:
             return True
 
     def is_legal_queen_move(self, move):
-        current_square_bb = set_bit(make_uint64(), move.from_sq)
+        current_square_bb = set_bit(make_uint64_zero(), move.from_sq)
         if move.piece == Piece.wQ:
             if not (self.board.player_Q_bb & current_square_bb):
                 return False
             if self.is_not_queen_attack(move):
                 return False
             return True
+
         if move.piece == Piece.bQ:
             if not (self.board.computer_Q_bb & current_square_bb):
                 return False
@@ -790,13 +802,14 @@ class Position:
             return True
 
     def is_legal_king_move(self, move):
-        current_square_bb = set_bit(make_uint64(), move.from_sq)
+        current_square_bb = set_bit(make_uint64_zero(), move.from_sq)
         if move.piece == Piece.wK:
             if not (self.board.player_K_bb & current_square_bb):
                 return False
             if self.is_not_king_attack(move):
                 return False
             return True
+
         if move.piece == Piece.bK:
             if not (self.board.computer_K_bb & current_square_bb):
                 return False
@@ -809,7 +822,7 @@ class Position:
     # -------------------------------------------------------------
 
     def is_not_pawn_motion_or_attack(self, move):
-        to_sq_bb = set_bit(make_uint64(), move.to_sq)
+        to_sq_bb = set_bit(make_uint64_zero(), move.to_sq)
         if move.rival == Rival.PLAYER:
             if (
                 not (
@@ -819,6 +832,7 @@ class Position:
                 & to_sq_bb
             ):
                 return True
+
         if move.rival == Rival.COMPUTER:
             if (
                 not (
@@ -829,8 +843,10 @@ class Position:
             ):
                 return True
 
+        return False
+
     def is_not_bishop_attack(self, move):
-        moving_to_square_bb = set_bit(make_uint64(), move.to_sq)
+        moving_to_square_bb = set_bit(make_uint64_zero(), move.to_sq)
         if move.rival == Rival.PLAYER:
             if not (self.player_bishop_attacks & moving_to_square_bb):
                 return True
@@ -838,8 +854,10 @@ class Position:
             if not (self.computer_bishop_attacks & moving_to_square_bb):
                 return True
 
+        return False
+
     def is_not_knight_attack(self, move):
-        moving_to_square_bb = set_bit(make_uint64(), move.to_sq)
+        moving_to_square_bb = set_bit(make_uint64_zero(), move.to_sq)
         if move.rival == Rival.PLAYER:
             if not (self.player_knight_attacks & moving_to_square_bb):
                 return True
@@ -847,18 +865,21 @@ class Position:
             if not (self.computer_knight_attacks & moving_to_square_bb):
                 return True
 
+        return False
+
     def is_not_king_attack(self, move):
-        moving_to_square_bb = set_bit(make_uint64(), move.to_sq)
+        moving_to_square_bb = set_bit(make_uint64_zero(), move.to_sq)
         if move.rival == Rival.PLAYER:
             if not (self.player_king_attacks & moving_to_square_bb):
                 return True
         if move.rival == Rival.COMPUTER:
             if not (self.computer_king_attacks & moving_to_square_bb):
                 return True
+
         return False
 
     def is_not_queen_attack(self, move):
-        moving_to_square_bb = set_bit(make_uint64(), move.to_sq)
+        moving_to_square_bb = set_bit(make_uint64_zero(), move.to_sq)
         if move.rival == Rival.PLAYER:
             if not (self.player_queen_attacks & moving_to_square_bb):
                 return True
@@ -866,17 +887,19 @@ class Position:
             if not (self.computer_queen_attacks & moving_to_square_bb):
                 return True
 
+        return False
+
     def is_not_rook_attack(self, move):
-        moving_to_square_bb = set_bit(make_uint64(), move.to_sq)
+        moving_to_square_bb = set_bit(make_uint64_zero(), move.to_sq)
         if move.rival == Rival.PLAYER:
             if not (self.player_rook_attacks & moving_to_square_bb):
                 return True
         if move.rival == Rival.COMPUTER:
             if not (self.computer_rook_attacks & moving_to_square_bb):
                 return True
+
         return False
 
-    @staticmethod
     def is_castling(move):
         if move.from_sq == Square.E1:
             if move.to_sq in {Square.G1, Square.C1}:
@@ -887,6 +910,7 @@ class Position:
         return False
 
     def is_promotion(self, pawn_move):
+        """ Has the rival pawn reached the other end of the board? """
         if pawn_move.rival == Rival.PLAYER and pawn_move.to_sq in Rank.X8:
             return True
         if pawn_move.rival == Rival.COMPUTER and pawn_move.to_sq in Rank.X1:
@@ -942,7 +966,7 @@ class Position:
 
         :return: True if Move is legal
         """
-        bitboard = make_uint64()
+        bitboard = make_uint64_zero()
         occupied = self.board.occupied_squares_bb
 
         northwest_ray = get_northwest_ray(bitboard, move_from_square)
@@ -1013,7 +1037,7 @@ class Position:
 
         :return: True if Move is legal
         """
-        bitboard = make_uint64()
+        bitboard = make_uint64_zero()
         occupied = self.board.occupied_squares_bb
 
         north_ray = get_north_ray(bitboard, move_from_square)
@@ -1077,7 +1101,7 @@ class Position:
 
         :return: True if Move is legal
         """
-        bitboard = make_uint64()
+        bitboard = make_uint64_zero()
 
         self.player_pawn_attacks = self.board.player_pawn_attacks
         self.computer_pawn_attacks = self.board.computer_pawn_attacks
@@ -1099,7 +1123,7 @@ class Position:
         }
 
         # Handle en-passant targets
-        if self.en_passant_target:
+        if self.en_passant_target is not None:
             en_passant_bb = set_bit(bitboard, self.en_passant_target)
             en_passant_move = legal_attack_moves[rival_to_move] & en_passant_bb
             if en_passant_move:
@@ -1147,7 +1171,7 @@ class Position:
 
         # TODO: Reduce duplication
 
-        bitboard = make_uint64()
+        bitboard = make_uint64_zero()
         occupied = self.board.occupied_squares_bb
 
         north_ray = get_north_ray(bitboard, move_from_square)
@@ -1318,9 +1342,9 @@ class Position:
                 | (self.board.player_pieces_bb & ~self.board.player_K_bb)
             ) & CastleRoute.PLAYER_QUEENSIDE
             is_rook_on_h1 = (self.board.player_R_bb &
-                             set_bit(make_uint64(), Square.H1))
+                             set_bit(make_uint64_zero(), Square.H1))
             is_rook_on_a1 = (self.board.player_R_bb &
-                             set_bit(make_uint64(), Square.A1))
+                             set_bit(make_uint64_zero(), Square.A1))
             return [
                 not kingside_blocked.any() and is_rook_on_h1.any(),
                 not queenside_blocked.any() and is_rook_on_a1.any(),
@@ -1336,9 +1360,9 @@ class Position:
                 | (self.board.computer_pieces_bb & ~self.board.computer_K_bb)
             ) & CastleRoute.COMPUTER_QUEENSIDE
             is_rook_on_h8 = (self.board.computer_R_bb &
-                             set_bit(make_uint64(), Square.H8))
+                             set_bit(make_uint64_zero(), Square.H8))
             is_rook_on_a8 = (self.board.computer_R_bb &
-                             set_bit(make_uint64(), Square.A8))
+                             set_bit(make_uint64_zero(), Square.A8))
             return [
                 not kingside_blocked.any() and is_rook_on_h8.any(),
                 not queenside_blocked.any() and is_rook_on_a8.any(),

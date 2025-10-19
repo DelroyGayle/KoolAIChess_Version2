@@ -1,7 +1,7 @@
 import numpy as np
 
 from wake_core import (
-    make_uint64,
+    make_uint64_zero,
     set_bit,
     make_knight_attack_bbs,
     make_king_attack_bbs,
@@ -21,20 +21,20 @@ class WakeBoard:
     def __init__(self):
 
         # PLAYER (white) piece groups
-        self.player_R_bb = make_uint64()
-        self.player_K_bb = make_uint64()
-        self.player_B_bb = make_uint64()
-        self.player_P_bb = make_uint64()
-        self.player_N_bb = make_uint64()
-        self.player_Q_bb = make_uint64()
+        self.player_R_bb = make_uint64_zero()
+        self.player_K_bb = make_uint64_zero()
+        self.player_B_bb = make_uint64_zero()
+        self.player_P_bb = make_uint64_zero()
+        self.player_N_bb = make_uint64_zero()
+        self.player_Q_bb = make_uint64_zero()
 
         # COMPUTER (black) piece groups
-        self.computer_R_bb = make_uint64()
-        self.computer_K_bb = make_uint64()
-        self.computer_B_bb = make_uint64()
-        self.computer_P_bb = make_uint64()
-        self.computer_N_bb = make_uint64()
-        self.computer_Q_bb = make_uint64()
+        self.computer_R_bb = make_uint64_zero()
+        self.computer_K_bb = make_uint64_zero()
+        self.computer_B_bb = make_uint64_zero()
+        self.computer_P_bb = make_uint64_zero()
+        self.computer_N_bb = make_uint64_zero()
+        self.computer_Q_bb = make_uint64_zero()
 
         self.init_pieces()
 
