@@ -46,9 +46,9 @@ def generate_knight_attack_bb_from_square(from_square: int) -> np.uint64:
 
         attack_bb |= set_bit(attack_bb, to_square)
         # Mask of wrapping
-        if from_square in (File.B | File.A):
+        if from_square in (File.FILE_B | File.FILE_A):
             attack_bb &= ~(np.uint64(File.HEX_G | File.HEX_H))
-        if from_square in (File.G | File.H):
+        if from_square in (File.FILE_G | File.FILE_H):
             attack_bb &= ~(np.uint64(File.HEX_A | File.HEX_B))
     return attack_bb
 
@@ -177,9 +177,9 @@ def generate_king_attack_bb_from_square(from_square: int) -> np.uint64:
             continue
         attack_bb |= ONE_BIT << np.uint64(to_square)
     # Mask of wrapping
-    if from_square in File.A:
+    if from_square in File.FILE_A:
         attack_bb &= ~np.uint64(File.HEX_H)
-    if from_square in File.H:
+    if from_square in File.FILE_H:
         attack_bb &= ~np.uint64(File.HEX_A)
     return attack_bb
 
@@ -207,9 +207,9 @@ def generate_player_pawn_attack_bb_from_square(from_square: int) -> np.uint64:
             continue
         attack_bb |= ONE_BIT << np.uint64(to_square)
     # Mask of wrapping
-    if from_square in File.A:
+    if from_square in File.FILE_A:
         attack_bb &= ~np.uint64(File.HEX_H)
-    if from_square in File.H:
+    if from_square in File.FILE_H:
         attack_bb &= ~np.uint64(File.HEX_A)
     return attack_bb
 
@@ -234,9 +234,9 @@ def generate_computer_pawn_attack_bb_from_square(
             continue
         attack_bb |= ONE_BIT << np.uint64(to_square)
     # Mask of wrapping
-    if from_square in File.A:
+    if from_square in File.FILE_A:
         attack_bb &= ~np.uint64(File.HEX_H)
-    if from_square in File.H:
+    if from_square in File.FILE_H:
         attack_bb &= ~np.uint64(File.HEX_A)
     return attack_bb
 
@@ -259,7 +259,7 @@ def generate_player_pawn_motion_bb_from_square(from_square: int) -> np.uint64:
         return motion_bb
 
     motion_bb |= ONE_BIT << np.uint64(from_square + 8)
-    if from_square in Rank.X2:
+    if from_square in Rank.RANK_X2:
         motion_bb |= ONE_BIT << np.uint64(from_square + 16)
     return motion_bb
 
@@ -284,6 +284,6 @@ def generate_computer_pawn_motion_bb_from_square(
         return motion_bb
 
     motion_bb |= ONE_BIT << np.uint64(from_square - 8)
-    if from_square in Rank.X7:
+    if from_square in Rank.RANK_X7:
         motion_bb |= ONE_BIT << np.uint64(from_square - 16)
     return motion_bb

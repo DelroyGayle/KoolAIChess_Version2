@@ -7,7 +7,7 @@ class Move:
     """
 
     def __init__(self, piece=None, squares=None):
-        self.piece = piece
+        self.piece_type = piece
         if squares is not None:
             self.from_sq = squares[FROM]
             self.to_sq = squares[TO]
@@ -22,7 +22,7 @@ class Move:
 
     @property
     def rival_piece(self):
-        if self.piece in Piece.PLAYER_PIECES:
+        if self.piece_type in Piece.PLAYER_PIECES:
             return Rival.PLAYER
         return Rival.COMPUTER
 

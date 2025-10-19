@@ -38,10 +38,6 @@ from wake_move import Move, MoveResult
 
 ROOK_RIVAL_MAP = {Rival.PLAYER: Piece.wR, Rival.COMPUTER: Piece.bR}
 
-# De-dupe from board module
-# De-dupe evaluate_move function
-# Should we generate the move from the board?
-
 
 class PositionState:
     """
@@ -109,7 +105,7 @@ class Position:
 
     def set_initial_piece_locations(self):
         # init all piece types with empty sets first
-        for piece_type in [
+        for piece_type in (
             Piece.wP,
             Piece.wR,
             Piece.wN,
@@ -122,7 +118,7 @@ class Position:
             Piece.bB,
             Piece.bQ,
             Piece.bK,
-        ]:
+        ):
             self.piece_map[piece_type] = set()
 
         # Set initial piece positions
@@ -229,7 +225,7 @@ class Position:
 
         castle_rights = self.castle_rights[move.rival]
 
-        if castle_rights[KINGSIDE] or castle_rights[QUEENSIDE]:
+        if any(castle_rights):
             self.adjust_castling_rights(move)
 
         if self.en_passant_side != move.rival:
@@ -270,7 +266,7 @@ class Position:
             print("Draw by insufficient material")
             return self.make_draw_result()
 
-        self.position_history.append(generate_fen(self))
+        self.position_history.append(generate_fen(self))  # TODO
         self.rival_to_move = switch_rival(self.rival_to_move)
 
         return self.make_move_result()
@@ -458,7 +454,7 @@ class Position:
         }
 
         all_pawn_moves = pawn_rival_map[rival_to_move][THE_ATTACK]
-        pawn_piece = pawn_rival_map[rival_to_move][THE_ATTACK]
+        pawn_piece = pawn_rival_map[rival_to_move][THE_PIECE]
 
         # if no attacks, return False
         if not all_pawn_moves.any():
@@ -597,7 +593,7 @@ class Position:
         """
         For a given move, returns True if it is legal given the Position state
         """
-        piece = move.piece
+        piece = move.piece_type
 
         if self.is_capture(move):
             move.is_capture = True
@@ -655,10 +651,10 @@ class Position:
         if move.piece not in {Piece.wP, Piece.bP}:
             return None
         if move.rival == Rival.PLAYER:
-            if move.to_sq in Rank.X4 and move.from_sq in Rank.X2:
+            if move.to_sq in Rank.RANK_X4 and move.from_sq in Rank.RANK_X2:
                 return move.to_sq - 8
         if move.rival == Rival.COMPUTER:
-            if move.to_sq in Rank.X5 and move.from_sq in Rank.X7:
+            if move.to_sq in Rank.RANK_X5 and move.from_sq in Rank.RANK_X7:
                 return move.to_sq + 8
         return None
 
@@ -696,7 +692,7 @@ class Position:
             potential_en_passant_target = set_bit(make_uint64_zero(),
                                                   self.en_passant_target)
 
-        if move.piece == Piece.wP:
+        if move.piece_type == Piece.wP:
             if not (self.board.player_P_bb & current_square_bb):
                 return False
 
@@ -719,7 +715,7 @@ class Position:
                     return False
             return True
 
-        if move.piece == Piece.bP:
+        if move.piece_type == Piece.bP:
             if not (self.board.computer_P_bb & current_square_bb):
                 return False
             if self.is_not_pawn_motion_or_attack(move):
@@ -748,14 +744,14 @@ class Position:
         - the to move intersects with the bishop attack bitboard
         """
         current_square_bb = set_bit(make_uint64_zero(), move.from_sq)
-        if move.piece == Piece.wB:
+        if move.piece_type == Piece.wB:
             if not (self.board.player_B_bb & current_square_bb):
                 return False
             if self.is_not_bishop_attack(move):
                 return False
             return True
 
-        if move.piece == Piece.bB:
+        if move.piece_type == Piece.bB:
             if not (self.board.computer_B_bb & current_square_bb):
                 return False
             if self.is_not_bishop_attack(move):
@@ -764,14 +760,14 @@ class Position:
 
     def is_legal_rook_move(self, move: Move) -> bool:
         current_square_bb = set_bit(make_uint64_zero(), move.from_sq)
-        if move.piece == Piece.wR:
+        if move.piece_type == Piece.wR:
             if not (self.board.player_R_bb & current_square_bb):
                 return False
             if self.is_not_rook_attack(move):
                 return False
             return True
 
-        if move.piece == Piece.bR:
+        if move.piece_type == Piece.bR:
             if not (self.board.computer_R_bb & current_square_bb):
                 return False
             if self.is_not_rook_attack(move):
@@ -930,9 +926,10 @@ class Position:
 
     def is_promotion(self, pawn_move):
         """ Has the rival pawn reached the other end of the board? """
-        if pawn_move.rival == Rival.PLAYER and pawn_move.to_sq in Rank.X8:
+        if pawn_move.rival == Rival.PLAYER and pawn_move.to_sq in Rank.RANK_X8:
             return True
-        if pawn_move.rival == Rival.COMPUTER and pawn_move.to_sq in Rank.X1:
+        if (pawn_move.rival == Rival.COMPUTER and
+           pawn_move.to_sq in Rank.RANK_X1):
             return True
         return False
 
@@ -1305,7 +1302,7 @@ class Position:
         # Handle Castling
         can_castle_pair = self.can_castle(rival_to_move)
 
-        if can_castle_pair[KINGSIDE] or can_castle_pair[QUEENSIDE]:
+        if any(can_castle_pair):
             king_moves |= self.add_castling_moves(king_moves,
                                                   can_castle_pair,
                                                   rival_to_move)
@@ -1418,7 +1415,7 @@ class Position:
     def make_illegal_move_result(self, message: str) -> MoveResult:
         move_result = MoveResult()
         move_result.is_illegal_move = True
-        move_result.fen = generate_fen(self)
+        move_result.fen = generate_fen(self)  # TODO
         return move_result
 
     def make_checkmate_result(self) -> MoveResult:
