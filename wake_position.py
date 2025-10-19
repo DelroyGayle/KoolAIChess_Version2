@@ -600,46 +600,47 @@ class Position:
         if self.is_capture(move):
             move.is_capture = True
 
-        if piece in (Piece.wP, Piece.bP):
-            is_legal_pawn_move = self.is_legal_pawn_move(move)
+        match piece:
+            case Piece.wB | Piece.bB:
+                return self.is_legal_bishop_move(move)
 
-            if not is_legal_pawn_move:
-                return False
+            case Piece.wR | Piece.bR:
+                return self.is_legal_rook_move(move)
 
-            if self.is_promotion(move):
-                move.is_promotion = True
+            case Piece.wN | Piece.bN:
+                return self.is_legal_knight_move(move)
+
+            case Piece.wQ | Piece.bQ:
+                return self.is_legal_queen_move(move)
+
+            case Piece.wK | Piece.bK:
+                is_legal_king_move = self.is_legal_king_move(move)
+                if not is_legal_king_move:
+                    return False
+                if self.is_castling(move):
+                    move.is_castling = True
                 return True
+            
+            case Piece.wP | Piece.bP:
+                is_legal_pawn_move = self.is_legal_pawn_move(move)
 
-            potential_en_passant_target = self.try_get_en_passant_target(move)
+                if not is_legal_pawn_move:
+                    return False
 
-            if potential_en_passant_target is not None:
-                self.en_passant_side = move.rival
-                self.en_passant_target = int(potential_en_passant_target)
+                if self.is_promotion(move):
+                    move.is_promotion = True
+                    return True
 
-            if move.to_sq == self.en_passant_target:
-                self.is_en_passant_capture = True
+                potential_en_passant_target = self.try_get_en_passant_target(move)
 
-            return True
+                if potential_en_passant_target is not None:
+                    self.en_passant_side = move.rival
+                    self.en_passant_target = int(potential_en_passant_target)
 
-        if piece in (Piece.wB, Piece.bB):
-            return self.is_legal_bishop_move(move)
+                if move.to_sq == self.en_passant_target:
+                    self.is_en_passant_capture = True
 
-        if piece in (Piece.wR, Piece.bR):
-            return self.is_legal_rook_move(move)
-
-        if piece in (Piece.wN, Piece.bN):
-            return self.is_legal_knight_move(move)
-
-        if piece in (Piece.wQ, Piece.bQ):
-            return self.is_legal_queen_move(move)
-
-        if piece in (Piece.wK, Piece.bK):
-            is_legal_king_move = self.is_legal_king_move(move)
-            if not is_legal_king_move:
-                return False
-            if self.is_castling(move):
-                move.is_castling = True
-            return True
+                return True
 
     # TODO 'move'
     def try_get_en_passant_target(self, move) -> Optional[int | np.uint64]:
