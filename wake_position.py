@@ -36,6 +36,7 @@ from wake_constants import (
 from wake_fen import generate_fen
 from wake_move import Move, MoveResult
 
+ROOK_RIVAL_MAP = {Rival.PLAYER: Piece.wR, Rival.COMPUTER: Piece.bR}
 
 # De-dupe from board module
 # De-dupe evaluate_move function
@@ -535,17 +536,18 @@ class Position:
 
     def adjust_castling_rights(self, move):
         if move.piece in {Piece.wK, Piece.bK, Piece.wR, Piece.bR}:
-            # If a KING piece is being moved, from this point onwards:
-            # this rival no longer has the rights to do a castling move
+
+            # If a KING piece is being moved, then from this point onwards:
+            # the KING can no longer be used in a castling move.
             if move.piece == Piece.wK:
                 self.castle_rights[Rival.PLAYER] = [False, False]
             if move.piece == Piece.bK:
                 self.castle_rights[Rival.COMPUTER] = [False, False]
 
-            # If a ROOK piece is being moved, from this point onwards:
+            # If a ROOK piece is being moved, then from this point onwards:
             # which ever side the rook originated from (either
-            # kingside or queenside), the king can no longer be
-            # castled to that side
+            # kingside or queenside), the KING can no longer be
+            # castled to that side.
             if move.piece == Piece.wR:
                 if move.from_sq == Square.H1:
                     self.castle_rights[Rival.PLAYER][KINGSIDE] = False
@@ -558,7 +560,7 @@ class Position:
                     self.castle_rights[Rival.COMPUTER][QUEENSIDE] = False
 
     def move_rooks_for_castling(self, move):
-        rook_rival_map = {Rival.PLAYER: Piece.wR, Rival.COMPUTER: Piece.bR}
+
         square_map = {
             Square.G1: (Square.H1, Square.F1),
             Square.C1: (Square.A1, Square.D1),
@@ -566,7 +568,7 @@ class Position:
             Square.C8: (Square.A8, Square.D8),
         }
 
-        rook_piece = rook_rival_map[move.rival]
+        rook_piece = ROOK_RIVAL_MAP[move.rival]
         from_sq, to_sq = square_map[move.to_sq]
 
         # Update both piece_map and mailbox
@@ -620,7 +622,7 @@ class Position:
                 if self.is_castling(move):
                     move.is_castling = True
                 return True
-            
+
             case Piece.wP | Piece.bP:
                 is_legal_pawn_move = self.is_legal_pawn_move(move)
 
@@ -631,7 +633,8 @@ class Position:
                     move.is_promotion = True
                     return True
 
-                potential_en_passant_target = self.try_get_en_passant_target(move)
+                potential_en_passant_target = (
+                    self.try_get_en_passant_target(move))
 
                 if potential_en_passant_target is not None:
                     self.en_passant_side = move.rival
@@ -644,6 +647,11 @@ class Position:
 
     # TODO 'move'
     def try_get_en_passant_target(self, move) -> Optional[int | np.uint64]:
+        """
+        Did a pawn perform an initial move of two squares?
+        If True, there is a possibility of a subsequence en passant move.
+        Return the target square
+        """
         if move.piece not in {Piece.wP, Piece.bP}:
             return None
         if move.rival == Rival.PLAYER:
@@ -902,6 +910,16 @@ class Position:
         return False
 
     def is_castling(move):
+        """
+        Is this a possible castling move?
+        If there is a king piece on E1,
+        then True i.e. E1 to G1 (white kingside)
+                       E1 to C1 (white queenside)
+        If there is a king piece on E8,
+        then True i.e. E8 to G8 (black kingside)
+                       E8 to C8 (white queenside)
+        Otherwise cannot be a castling move
+        """
         if move.from_sq == Square.E1:
             if move.to_sq in {Square.G1, Square.C1}:
                 return True
