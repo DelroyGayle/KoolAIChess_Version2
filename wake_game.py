@@ -10,7 +10,7 @@ CURRENT_VERSION = "2.0.0"
 # VERSION 1.0.0 is at https://github.com/DelroyGayle/KoolAIChess
 
 
-def clear():
+def clear_screen():
     # Windows
     if name == "nt":
         _ = system("cls")

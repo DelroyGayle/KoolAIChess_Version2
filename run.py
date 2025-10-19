@@ -24,6 +24,7 @@ from extras import CustomException, in_check, is_it_checkmate
 from extras import finalise_computer_move
 from collections import deque
 from functools import cache
+from wake_game import clear_screen
 
 
 def handle_internal_error():
@@ -796,16 +797,18 @@ def main_part2():
     Initialise the Game
     (Note: Input File is only used for testing purposes,
      not for game play)
+    Initialise the WakeEngine
     Display the Board
     Start the Main Loop
     """
 
     chess = Game()
+    # wake_game = WakeGame()
 
     f.open_input_file()
 
     chess.fillboard()
-    os.system('cls' if os.name == 'nt' else 'clear')
+    clear_screen()
     chess.showboard()
 
     # Game Loop

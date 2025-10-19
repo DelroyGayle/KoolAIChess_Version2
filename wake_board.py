@@ -3,6 +3,9 @@ import numpy as np
 from wake_core import (
     make_uint64_zero,
     set_bit,
+)
+
+from wake_maps import (
     make_knight_attack_bbs,
     make_king_attack_bbs,
     make_player_pawn_attack_bbs,
@@ -13,6 +16,7 @@ from wake_core import (
     make_computer_pawn_motion_bbs,
     make_queen_attack_bbs,
 )
+
 from wake_constants import Piece, Rival, File
 from extras import CustomException
 

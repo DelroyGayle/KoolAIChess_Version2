@@ -2,28 +2,8 @@ import copy  # TODO RE copy/deepcopy
 
 import numpy as np
 
-from typing import Optional, Union
+from typing import Optional
 
-from wake_constants import (KINGSIDE, QUEENSIDE,
-                            THE_ATTACK, THE_PIECE)
-from wake_core import (
-    set_bit,
-    get_northwest_ray,
-    bitscan_forward,
-    get_northeast_ray,
-    bitscan_reverse,
-    get_southwest_ray,
-    get_southeast_ray,
-    get_north_ray,
-    get_east_ray,
-    get_south_ray,
-    get_west_ray,
-    make_uint64_zero,
-    generate_king_attack_bb_from_square,
-    get_squares_from_bitboard,
-    switch_rival
-)
-from wake_board import Board
 from wake_constants import (
     Rival,
     Piece,
@@ -32,7 +12,34 @@ from wake_constants import (
     Rank,
     PLAYER_PROMOTION_MAP,
     COMPUTER_PROMOTION_MAP,
+    KINGSIDE,
+    QUEENSIDE,
+    THE_ATTACK,
+    THE_PIECE
 )
+
+from wake_core import (
+    set_bit,
+    bitscan_forward,
+    bitscan_reverse,
+    make_uint64_zero,
+    get_squares_from_bitboard,
+    switch_rival
+)
+
+from wake_rays import (
+    get_north_ray,
+    get_south_ray,
+    get_east_ray,
+    get_west_ray,
+    get_northeast_ray,
+    get_northwest_ray,
+    get_southeast_ray,
+    get_southwest_ray,
+)
+
+from wake_attacks import generate_king_attack_bb_from_square
+from wake_board import WakeBoard
 from wake_fen import generate_fen
 from wake_move import Move, MoveResult
 
@@ -57,7 +64,7 @@ class Position:
 
     def __init__(self, board=None, position_state=None):
         if board is None:
-            self.board = Board()
+            self.board = WakeBoard()
         else:
             self.board = board
 
@@ -80,11 +87,11 @@ class Position:
         self.king_in_check = [False, False]
 
         # Position history for 3-fold repetition detection
-        self.position_history = []
+        self.position_history = []  # TODO Move to game.py
 
         self.set_initial_piece_locations()
 
-        # Initialize mailbox after setting piece locations
+        # Initialise mailbox after setting piece locations
         self.sync_mailbox_from_piece_map()
 
         self.player_pawn_moves = make_uint64_zero()
@@ -146,6 +153,7 @@ class Position:
             for square in squares:
                 self.mailbox[square] = piece
 
+    # TODO remove!
     def reset_state_to(self, memento: PositionState) -> None:
         for k, v in memento.__dict__.items():
             setattr(self, k, v)
@@ -185,7 +193,7 @@ class Position:
 
     # TODO
     def make_move(self, move) -> MoveResult:
-        if self.rival_to_move != move.rival:
+        if self.rival_to_move != move.rival:  # TODO
             return self.make_illegal_move_result("Not your move!")
 
         original_position = PositionState(copy.deepcopy(self.__dict__))
@@ -1408,7 +1416,7 @@ class Position:
 
     def make_move_result(self) -> MoveResult:
         move_result = MoveResult()
-        move_result.fen = generate_fen(self)
+        move_result.fen = generate_fen(self)  # TODO
         return move_result
 
     # TODO message IS NEVER USED!
@@ -1421,19 +1429,19 @@ class Position:
     def make_checkmate_result(self) -> MoveResult:
         move_result = MoveResult()
         move_result.is_checkmate = True
-        move_result.fen = generate_fen(self)
+        move_result.fen = generate_fen(self)  # TODO
         return move_result
 
     def make_stalemate_result(self) -> MoveResult:
         move_result = MoveResult()
         move_result.is_stalemate = True
-        move_result.fen = generate_fen(self)
+        move_result.fen = generate_fen(self)  # TODO
         return move_result
 
     def make_draw_result(self) -> MoveResult:
         move_result = MoveResult()
         move_result.is_draw_claim_allowed = True
-        move_result.fen = generate_fen(self)
+        move_result.fen = generate_fen(self)  # TODO
         return move_result
 
     def is_threefold_repetition(self) -> bool:
@@ -1441,9 +1449,10 @@ class Position:
         Check if the current position has occurred 3 times.
         Returns True if 3-fold repetition has occurred.
         """
-        current_fen = generate_fen(self)
+        current_fen = generate_fen(self)  # TODO X 2
 
         # Count occurrences of current position in history
+        # TODO regarding position_history
         position_count = self.position_history.count(current_fen)
 
         # If this position has occurred 2 times before, this would be the 3rd
@@ -1512,7 +1521,8 @@ class Position:
             black_bishop_squares = list(self.piece_map.get(Piece.bB, set()))
 
             if white_bishop_squares and black_bishop_squares:
-                # Check if both bishops are on same colour squares
+                # if both lists are not empty then
+                # Check if both bishops are on the same colour squares
                 # (sum of coordinates is even/odd)
                 white_bishop_square = white_bishop_squares[0]
                 black_bishop_square = black_bishop_squares[0]
@@ -1581,7 +1591,7 @@ def evaluate_move(move, position: Position) -> MoveResult:
 
     castle_rights = position.castle_rights[position.rival_to_move]
 
-    if castle_rights[KINGSIDE] or castle_rights[QUEENSIDE]:
+    if any(castle_rights):
         position.adjust_castling_rights(move)
 
     if position.en_passant_side != position.rival_to_move:

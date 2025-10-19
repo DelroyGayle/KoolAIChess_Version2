@@ -9,7 +9,7 @@ This module provides fundamental bitboard operations including:
 """
 
 import numpy as np
-from constants import Rival
+from wake_constants import Rival
 
 # Constants
 BOARD_SIZE = 8
