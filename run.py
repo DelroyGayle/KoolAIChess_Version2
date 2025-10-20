@@ -47,7 +47,10 @@ def handle_internal_error():
     # *** END PROGRAM ***
 
 
-def is_piece_taken(chess, to_file, to_rank, piece_sign):
+def is_piece_taken(chess: Game,
+                   to_file: str,
+                   to_rank: str,
+                   piece_sign: int) -> Optional[int] | NoReturn:
     """
     Set up a message showing which user took which piece
     Return the positive value of the piece taken
@@ -523,11 +526,15 @@ def process_computer_move(chess: Game, from_file: str, from_rank: str,
     return
 
 
-def finalise_player_move(chess, it_is_a_castling_move,
-                         from_file=None, from_rank=None,
-                         to_file=None, to_rank=None,
-                         print_string="", attacking_piece_letter="",
-                         taken=None):
+def finalise_player_move(chess: Game,
+                         it_is_a_castling_move: bool,
+                         from_file: Optional[str] = None,
+                         from_rank: Optional[str] = None,
+                         to_file: Optional[str] = None,
+                         to_rank: Optional[str] = None,
+                         print_string: str = "",
+                         attacking_piece_letter: str = "",
+                         taken: Optional[int] = None) -> None:
     """
     Now that the Player's move has been performed
     Increment the move count (if not reading from a file)
@@ -677,7 +684,7 @@ def player_move_validation_loop(chess: Game, wake_game: WakeGame,
                                            from_file, from_rank,
                                            to_file, to_rank)
         move_result = wake_game.position.make_move(wake_move)
-        print(move_result)
+        print(move_result)  # TODO
         sleep(15)
         quit()
 

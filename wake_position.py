@@ -193,10 +193,11 @@ class Position:
 
     # TODO
     def make_move(self, move) -> MoveResult:
-        # if self.rival_to_move != move.rival:  # TODO
+        # if self.rival_to_move != move.rival_identity_identity:  # TODO
         #     return self.make_illegal_move_result("Not your move!")
 
-        original_position = PositionState(copy.deepcopy(self.__dict__))
+        # original_position = copy.deepcopy(self.__dict__) TODO
+        original_position = copy.deepcopy(self)
 
         if not self.is_legal_move(move):
             return self.make_illegal_move_result("Illegal move")
@@ -206,21 +207,22 @@ class Position:
             self.remove_opponent_piece_from_square(move.to_sq)
 
         if self.is_en_passant_capture:
-            if move.rival == Rival.PLAYER:
+            if move.rival_identity == Rival.PLAYER:
                 self.remove_opponent_piece_from_square(move.to_sq - 8)
-            if move.rival == Rival.COMPUTER:
+            if move.rival_identity == Rival.COMPUTER:
                 self.remove_opponent_piece_from_square(move.to_sq + 8)
 
         self.is_en_passant_capture = False
 
-        if move.piece in {Piece.wP, Piece.bP}:
+        if move.piece_type in {Piece.wP, Piece.bP}:
             self.halfmove_clock = 0
 
         # update both piece_map and mailbox
-        self.piece_map[move.piece].remove(move.from_sq)
-        self.piece_map[move.piece].add(move.to_sq)
+        self.piece_map[move.piece_type].remove(move.from_sq)
+        self.piece_map[move.piece_type].add(move.to_sq)
         self.mailbox[move.from_sq] = None
-        self.mailbox[move.to_sq] = move.piece
+        self.mailbox[move.to_sq] = move.piece_type
+        print("MAILBOX", move.piece_type)  # TODO
 
         if move.is_promotion:
             self.promote_pawn(move)
@@ -231,23 +233,24 @@ class Position:
         self.halfmove_clock += 1
         self.halfmove += 1
 
-        castle_rights = self.castle_rights[move.rival]
+        castle_rights = self.castle_rights[move.rival_identity]
 
         if any(castle_rights):
             self.adjust_castling_rights(move)
 
-        if self.en_passant_side != move.rival:
+        if self.en_passant_side != move.rival_identity:
             self.en_passant_target = None
 
         self.board.update_position_bitboards(self.piece_map)
         self.update_attack_bitboards()
         self.evaluate_king_check()
 
-        if self.king_in_check[move.rival]:
+        if self.king_in_check[move.rival_identity]:
+            print("RESET")  # TODO
             self.reset_state_to(original_position)
             return self.make_illegal_move_result("own king in check")
 
-        other_player = (Rival.COMPUTER if move.rival == Rival.PLAYER
+        other_player = (Rival.COMPUTER if move.rival_identity == Rival.PLAYER
                         else Rival.PLAYER)
 
         if (self.king_in_check[other_player]
@@ -291,7 +294,7 @@ class Position:
                 continue
 
             # Update both piece_map and mailbox
-            self.piece_map[move.piece].remove(move.to_sq)
+            self.piece_map[move.piece_type].remove(move.to_sq)
             new_piece = self.get_promotion_piece_type(legal_piece, move)
             self.piece_map[new_piece].add(move.to_sq)
             self.mailbox[move.to_sq] = new_piece
@@ -538,25 +541,25 @@ class Position:
                     self.update_legal_king_moves(square, Rival.COMPUTER)
 
     def adjust_castling_rights(self, move):
-        if move.piece in {Piece.wK, Piece.bK, Piece.wR, Piece.bR}:
+        if move.piece_type in {Piece.wK, Piece.bK, Piece.wR, Piece.bR}:
 
             # If a KING piece is being moved, then from this point onwards:
             # the KING can no longer be used in a castling move.
-            if move.piece == Piece.wK:
+            if move.piece_type == Piece.wK:
                 self.castle_rights[Rival.PLAYER] = [False, False]
-            if move.piece == Piece.bK:
+            if move.piece_type == Piece.bK:
                 self.castle_rights[Rival.COMPUTER] = [False, False]
 
             # If a ROOK piece is being moved, then from this point onwards:
             # which ever side the rook originated from (either
             # kingside or queenside), the KING can no longer be
             # castled to that side.
-            if move.piece == Piece.wR:
+            if move.piece_type == Piece.wR:
                 if move.from_sq == Square.H1:
                     self.castle_rights[Rival.PLAYER][KINGSIDE] = False
                 if move.from_sq == Square.A1:
                     self.castle_rights[Rival.PLAYER][QUEENSIDE] = False
-            if move.piece == Piece.bR:
+            if move.piece_type == Piece.bR:
                 if move.from_sq == Square.H8:
                     self.castle_rights[Rival.COMPUTER][KINGSIDE] = False
                 if move.from_sq == Square.A8:
@@ -571,7 +574,7 @@ class Position:
             Square.C8: (Square.A8, Square.D8),
         }
 
-        rook_piece = ROOK_RIVAL_MAP[move.rival]
+        rook_piece = ROOK_RIVAL_MAP[move.rival_identity]
         from_sq, to_sq = square_map[move.to_sq]
 
         # Update both piece_map and mailbox
@@ -640,7 +643,7 @@ class Position:
                     self.try_get_en_passant_target(move))
 
                 if potential_en_passant_target is not None:
-                    self.en_passant_side = move.rival
+                    self.en_passant_side = move.rival_identity
                     self.en_passant_target = int(potential_en_passant_target)
 
                 if move.to_sq == self.en_passant_target:
@@ -655,12 +658,12 @@ class Position:
         If True, there is a possibility of a subsequence en passant move.
         Return the target square
         """
-        if move.piece not in {Piece.wP, Piece.bP}:
+        if move.piece_type not in {Piece.wP, Piece.bP}:
             return None
-        if move.rival == Rival.PLAYER:
+        if move.rival_identity == Rival.PLAYER:
             if move.to_sq in Rank.RANK_X4 and move.from_sq in Rank.RANK_X2:
                 return move.to_sq - 8
-        if move.rival == Rival.COMPUTER:
+        if move.rival_identity == Rival.COMPUTER:
             if move.to_sq in Rank.RANK_X5 and move.from_sq in Rank.RANK_X7:
                 return move.to_sq + 8
         return None
@@ -670,11 +673,11 @@ class Position:
 
         moving_to_square_bb = set_bit(make_uint64_zero(), move.to_sq)
 
-        if move.rival == Rival.PLAYER:
+        if move.rival_identity == Rival.PLAYER:
             intersects = moving_to_square_bb & self.board.computer_pieces_bb
             if intersects.any():
                 return True
-        if move.rival == Rival.COMPUTER:
+        if move.rival_identity == Rival.COMPUTER:
             intersects = moving_to_square_bb & self.board.player_pieces_bb
             if intersects.any():
                 return True
@@ -783,14 +786,14 @@ class Position:
 
     def is_legal_knight_move(self, move):
         current_square_bb = set_bit(make_uint64_zero(), move.from_sq)
-        if move.piece == Piece.wN:
+        if move.piece_type == Piece.wN:
             if not (self.board.player_N_bb & current_square_bb):
                 return False
             if self.is_not_knight_attack(move):
                 return False
             return True
 
-        if move.piece == Piece.bN:
+        if move.piece_type == Piece.bN:
             if not (self.board.computer_N_bb & current_square_bb):
                 return False
             if self.is_not_knight_attack(move):
@@ -799,14 +802,14 @@ class Position:
 
     def is_legal_queen_move(self, move):
         current_square_bb = set_bit(make_uint64_zero(), move.from_sq)
-        if move.piece == Piece.wQ:
+        if move.piece_type == Piece.wQ:
             if not (self.board.player_Q_bb & current_square_bb):
                 return False
             if self.is_not_queen_attack(move):
                 return False
             return True
 
-        if move.piece == Piece.bQ:
+        if move.piece_type == Piece.bQ:
             if not (self.board.computer_Q_bb & current_square_bb):
                 return False
             if self.is_not_queen_attack(move):
@@ -815,14 +818,14 @@ class Position:
 
     def is_legal_king_move(self, move):
         current_square_bb = set_bit(make_uint64_zero(), move.from_sq)
-        if move.piece == Piece.wK:
+        if move.piece_type == Piece.wK:
             if not (self.board.player_K_bb & current_square_bb):
                 return False
             if self.is_not_king_attack(move):
                 return False
             return True
 
-        if move.piece == Piece.bK:
+        if move.piece_type == Piece.bK:
             if not (self.board.computer_K_bb & current_square_bb):
                 return False
             if self.is_not_king_attack(move):
@@ -835,7 +838,7 @@ class Position:
 
     def is_not_pawn_motion_or_attack(self, move):
         to_sq_bb = set_bit(make_uint64_zero(), move.to_sq)
-        if move.rival == Rival.PLAYER:
+        if move.rival_identity == Rival.PLAYER:
             if (
                 not (
                     self.board.player_pawn_motion_bbs[move.from_sq]
@@ -845,7 +848,7 @@ class Position:
             ):
                 return True
 
-        if move.rival == Rival.COMPUTER:
+        if move.rival_identity == Rival.COMPUTER:
             if (
                 not (
                     self.board.computer_pawn_motion_bbs[move.from_sq]
@@ -859,10 +862,10 @@ class Position:
 
     def is_not_bishop_attack(self, move):
         moving_to_square_bb = set_bit(make_uint64_zero(), move.to_sq)
-        if move.rival == Rival.PLAYER:
+        if move.rival_identity == Rival.PLAYER:
             if not (self.player_bishop_attacks & moving_to_square_bb):
                 return True
-        if move.rival == Rival.COMPUTER:
+        if move.rival_identity == Rival.COMPUTER:
             if not (self.computer_bishop_attacks & moving_to_square_bb):
                 return True
 
@@ -870,10 +873,10 @@ class Position:
 
     def is_not_knight_attack(self, move):
         moving_to_square_bb = set_bit(make_uint64_zero(), move.to_sq)
-        if move.rival == Rival.PLAYER:
+        if move.rival_identity == Rival.PLAYER:
             if not (self.player_knight_attacks & moving_to_square_bb):
                 return True
-        if move.rival == Rival.COMPUTER:
+        if move.rival_identity == Rival.COMPUTER:
             if not (self.computer_knight_attacks & moving_to_square_bb):
                 return True
 
@@ -881,10 +884,10 @@ class Position:
 
     def is_not_king_attack(self, move):
         moving_to_square_bb = set_bit(make_uint64_zero(), move.to_sq)
-        if move.rival == Rival.PLAYER:
+        if move.rival_identity == Rival.PLAYER:
             if not (self.player_king_attacks & moving_to_square_bb):
                 return True
-        if move.rival == Rival.COMPUTER:
+        if move.rival_identity == Rival.COMPUTER:
             if not (self.computer_king_attacks & moving_to_square_bb):
                 return True
 
@@ -892,10 +895,10 @@ class Position:
 
     def is_not_queen_attack(self, move):
         moving_to_square_bb = set_bit(make_uint64_zero(), move.to_sq)
-        if move.rival == Rival.PLAYER:
+        if move.rival_identity == Rival.PLAYER:
             if not (self.player_queen_attacks & moving_to_square_bb):
                 return True
-        if move.rival == Rival.COMPUTER:
+        if move.rival_identity == Rival.COMPUTER:
             if not (self.computer_queen_attacks & moving_to_square_bb):
                 return True
 
@@ -903,10 +906,10 @@ class Position:
 
     def is_not_rook_attack(self, move):
         moving_to_square_bb = set_bit(make_uint64_zero(), move.to_sq)
-        if move.rival == Rival.PLAYER:
+        if move.rival_identity == Rival.PLAYER:
             if not (self.player_rook_attacks & moving_to_square_bb):
                 return True
-        if move.rival == Rival.COMPUTER:
+        if move.rival_identity == Rival.COMPUTER:
             if not (self.computer_rook_attacks & moving_to_square_bb):
                 return True
 
@@ -933,9 +936,10 @@ class Position:
 
     def is_promotion(self, pawn_move):
         """ Has the rival pawn reached the other end of the board? """
-        if pawn_move.rival == Rival.PLAYER and pawn_move.to_sq in Rank.RANK_X8:
+        if (pawn_move.rival_identity == Rival.PLAYER and
+           pawn_move.to_sq in Rank.RANK_X8):
             return True
-        if (pawn_move.rival == Rival.COMPUTER and
+        if (pawn_move.rival_identity == Rival.COMPUTER and
            pawn_move.to_sq in Rank.RANK_X1):
             return True
         return False
@@ -1392,9 +1396,9 @@ class Position:
             ]
 
     def get_promotion_piece_type(self, legal_piece, move):
-        if move.rival == Rival.PLAYER:
+        if move.rival_identity == Rival.PLAYER:
             return PLAYER_PROMOTION_MAP[legal_piece]
-        if move.rival == Rival.COMPUTER:
+        if move.rival_identity == Rival.COMPUTER:
             return COMPUTER_PROMOTION_MAP[legal_piece]
 
     def evaluate_king_check(self):
@@ -1571,13 +1575,13 @@ def evaluate_move(move, position: Position) -> MoveResult:
 
     position.is_en_passant_capture = False
 
-    if move.piece in {Piece.wP, Piece.bP}:
+    if move.piece_type in {Piece.wP, Piece.bP}:
         position.halfmove_clock = 0
     # update both piece_map and mailbox
-    position.piece_map[move.piece].remove(move.from_sq)
-    position.piece_map[move.piece].add(move.to_sq)
+    position.piece_map[move.piece_type].remove(move.from_sq)
+    position.piece_map[move.piece_type].add(move.to_sq)
     position.mailbox[move.from_sq] = None
-    position.mailbox[move.to_sq] = move.piece
+    position.mailbox[move.to_sq] = move.piece_type
 
     if move.is_promotion:
         position.promote_pawn(move)

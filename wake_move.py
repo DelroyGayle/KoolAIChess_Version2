@@ -21,7 +21,7 @@ class Move:
         self.promote_to = None
 
     @property
-    def rival_piece(self):
+    def rival_identity(self):
         if self.piece_type in Piece.PLAYER_PIECES:
             return Rival.PLAYER
         return Rival.COMPUTER
