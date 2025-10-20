@@ -112,7 +112,7 @@ class Position:
 
     def set_initial_piece_locations(self):
         # init all piece types with empty sets first
-        for piece_type in (
+        for piece_type_number in (
             Piece.wP,
             Piece.wR,
             Piece.wN,
@@ -126,7 +126,7 @@ class Position:
             Piece.bQ,
             Piece.bK,
         ):
-            self.piece_map[piece_type] = set()
+            self.piece_map[piece_type_number] = set()
 
         # Set initial piece positions
         self.piece_map[Piece.wP] = set([i for i in range(8, 16)])
@@ -214,15 +214,15 @@ class Position:
 
         self.is_en_passant_capture = False
 
-        if move.piece_type in {Piece.wP, Piece.bP}:
+        if move.piece_type_number in {Piece.wP, Piece.bP}:
             self.halfmove_clock = 0
 
         # update both piece_map and mailbox
-        self.piece_map[move.piece_type].remove(move.from_sq)
-        self.piece_map[move.piece_type].add(move.to_sq)
+        self.piece_map[move.piece_type_number].remove(move.from_sq)
+        self.piece_map[move.piece_type_number].add(move.to_sq)
         self.mailbox[move.from_sq] = None
-        self.mailbox[move.to_sq] = move.piece_type
-        print("MAILBOX", move.piece_type)  # TODO
+        self.mailbox[move.to_sq] = move.piece_type_number
+        print("MAILBOX", move.piece_type_number)  # TODO
 
         if move.is_promotion:
             self.promote_pawn(move)
@@ -294,7 +294,7 @@ class Position:
                 continue
 
             # Update both piece_map and mailbox
-            self.piece_map[move.piece_type].remove(move.to_sq)
+            self.piece_map[move.piece_type_number].remove(move.to_sq)
             new_piece = self.get_promotion_piece_type(legal_piece, move)
             self.piece_map[new_piece].add(move.to_sq)
             self.mailbox[move.to_sq] = new_piece
@@ -541,25 +541,25 @@ class Position:
                     self.update_legal_king_moves(square, Rival.COMPUTER)
 
     def adjust_castling_rights(self, move):
-        if move.piece_type in {Piece.wK, Piece.bK, Piece.wR, Piece.bR}:
+        if move.piece_type_number in {Piece.wK, Piece.bK, Piece.wR, Piece.bR}:
 
             # If a KING piece is being moved, then from this point onwards:
             # the KING can no longer be used in a castling move.
-            if move.piece_type == Piece.wK:
+            if move.piece_type_number == Piece.wK:
                 self.castle_rights[Rival.PLAYER] = [False, False]
-            if move.piece_type == Piece.bK:
+            if move.piece_type_number == Piece.bK:
                 self.castle_rights[Rival.COMPUTER] = [False, False]
 
             # If a ROOK piece is being moved, then from this point onwards:
             # which ever side the rook originated from (either
             # kingside or queenside), the KING can no longer be
             # castled to that side.
-            if move.piece_type == Piece.wR:
+            if move.piece_type_number == Piece.wR:
                 if move.from_sq == Square.H1:
                     self.castle_rights[Rival.PLAYER][KINGSIDE] = False
                 if move.from_sq == Square.A1:
                     self.castle_rights[Rival.PLAYER][QUEENSIDE] = False
-            if move.piece_type == Piece.bR:
+            if move.piece_type_number == Piece.bR:
                 if move.from_sq == Square.H8:
                     self.castle_rights[Rival.COMPUTER][KINGSIDE] = False
                 if move.from_sq == Square.A8:
@@ -603,7 +603,7 @@ class Position:
         """
         For a given move, returns True if it is legal given the Position state
         """
-        piece = move.piece_type
+        piece = move.piece_type_number
 
         if self.is_capture(move):
             move.is_capture = True
@@ -658,7 +658,7 @@ class Position:
         If True, there is a possibility of a subsequence en passant move.
         Return the target square
         """
-        if move.piece_type not in {Piece.wP, Piece.bP}:
+        if move.piece_type_number not in {Piece.wP, Piece.bP}:
             return None
         if move.rival_identity == Rival.PLAYER:
             if move.to_sq in Rank.RANK_X4 and move.from_sq in Rank.RANK_X2:
@@ -702,7 +702,7 @@ class Position:
             potential_en_passant_target = set_bit(make_uint64_zero(),
                                                   self.en_passant_target)
 
-        if move.piece_type == Piece.wP:
+        if move.piece_type_number == Piece.wP:
             if not (self.board.player_P_bb & current_square_bb):
                 return False
 
@@ -725,7 +725,7 @@ class Position:
                     return False
             return True
 
-        if move.piece_type == Piece.bP:
+        if move.piece_type_number == Piece.bP:
             if not (self.board.computer_P_bb & current_square_bb):
                 return False
             if self.is_not_pawn_motion_or_attack(move):
@@ -754,14 +754,14 @@ class Position:
         - the to move intersects with the bishop attack bitboard
         """
         current_square_bb = set_bit(make_uint64_zero(), move.from_sq)
-        if move.piece_type == Piece.wB:
+        if move.piece_type_number == Piece.wB:
             if not (self.board.player_B_bb & current_square_bb):
                 return False
             if self.is_not_bishop_attack(move):
                 return False
             return True
 
-        if move.piece_type == Piece.bB:
+        if move.piece_type_number == Piece.bB:
             if not (self.board.computer_B_bb & current_square_bb):
                 return False
             if self.is_not_bishop_attack(move):
@@ -770,14 +770,14 @@ class Position:
 
     def is_legal_rook_move(self, move: Move) -> bool:
         current_square_bb = set_bit(make_uint64_zero(), move.from_sq)
-        if move.piece_type == Piece.wR:
+        if move.piece_type_number == Piece.wR:
             if not (self.board.player_R_bb & current_square_bb):
                 return False
             if self.is_not_rook_attack(move):
                 return False
             return True
 
-        if move.piece_type == Piece.bR:
+        if move.piece_type_number == Piece.bR:
             if not (self.board.computer_R_bb & current_square_bb):
                 return False
             if self.is_not_rook_attack(move):
@@ -786,14 +786,14 @@ class Position:
 
     def is_legal_knight_move(self, move):
         current_square_bb = set_bit(make_uint64_zero(), move.from_sq)
-        if move.piece_type == Piece.wN:
+        if move.piece_type_number == Piece.wN:
             if not (self.board.player_N_bb & current_square_bb):
                 return False
             if self.is_not_knight_attack(move):
                 return False
             return True
 
-        if move.piece_type == Piece.bN:
+        if move.piece_type_number == Piece.bN:
             if not (self.board.computer_N_bb & current_square_bb):
                 return False
             if self.is_not_knight_attack(move):
@@ -802,14 +802,14 @@ class Position:
 
     def is_legal_queen_move(self, move):
         current_square_bb = set_bit(make_uint64_zero(), move.from_sq)
-        if move.piece_type == Piece.wQ:
+        if move.piece_type_number == Piece.wQ:
             if not (self.board.player_Q_bb & current_square_bb):
                 return False
             if self.is_not_queen_attack(move):
                 return False
             return True
 
-        if move.piece_type == Piece.bQ:
+        if move.piece_type_number == Piece.bQ:
             if not (self.board.computer_Q_bb & current_square_bb):
                 return False
             if self.is_not_queen_attack(move):
@@ -818,14 +818,14 @@ class Position:
 
     def is_legal_king_move(self, move):
         current_square_bb = set_bit(make_uint64_zero(), move.from_sq)
-        if move.piece_type == Piece.wK:
+        if move.piece_type_number == Piece.wK:
             if not (self.board.player_K_bb & current_square_bb):
                 return False
             if self.is_not_king_attack(move):
                 return False
             return True
 
-        if move.piece_type == Piece.bK:
+        if move.piece_type_number == Piece.bK:
             if not (self.board.computer_K_bb & current_square_bb):
                 return False
             if self.is_not_king_attack(move):
@@ -1575,13 +1575,13 @@ def evaluate_move(move, position: Position) -> MoveResult:
 
     position.is_en_passant_capture = False
 
-    if move.piece_type in {Piece.wP, Piece.bP}:
+    if move.piece_type_number in {Piece.wP, Piece.bP}:
         position.halfmove_clock = 0
     # update both piece_map and mailbox
-    position.piece_map[move.piece_type].remove(move.from_sq)
-    position.piece_map[move.piece_type].add(move.to_sq)
+    position.piece_map[move.piece_type_number].remove(move.from_sq)
+    position.piece_map[move.piece_type_number].add(move.to_sq)
     position.mailbox[move.from_sq] = None
-    position.mailbox[move.to_sq] = move.piece_type
+    position.mailbox[move.to_sq] = move.piece_type_number
 
     if move.is_promotion:
         position.promote_pawn(move)

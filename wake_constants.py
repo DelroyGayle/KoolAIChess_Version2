@@ -274,6 +274,7 @@ class Rival:
 
 
 class Piece:
+    # Piece Type Numbers
     EMPTY = 0
 
     wP = 1
