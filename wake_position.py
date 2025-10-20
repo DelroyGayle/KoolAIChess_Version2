@@ -193,8 +193,8 @@ class Position:
 
     # TODO
     def make_move(self, move) -> MoveResult:
-        if self.rival_to_move != move.rival:  # TODO
-            return self.make_illegal_move_result("Not your move!")
+        # if self.rival_to_move != move.rival:  # TODO
+        #     return self.make_illegal_move_result("Not your move!")
 
         original_position = PositionState(copy.deepcopy(self.__dict__))
 
@@ -241,7 +241,6 @@ class Position:
 
         self.board.update_position_bitboards(self.piece_map)
         self.update_attack_bitboards()
-
         self.evaluate_king_check()
 
         if self.king_in_check[move.rival]:

@@ -15,22 +15,25 @@ from time import sleep
 from functools import cache
 
 
-def output_attacking_move(chess, who_are_you,
-                          from_file, from_rank, to_file, to_rank):
-    """
-    Create a output message for the current chess move
-    Showing who played what, the from square and the to square
-    """
-
-    strings_dict = {
+STRINGS_DICT = {
         constants.KING_LETTER:   "King",
         constants.QUEEN_LETTER:  "Queen",
         constants.ROOK_LETTER:   "Rook",
         constants.BISHOP_LETTER: "Bishop",
         constants.KNIGHT_LETTER: "Knight",
         constants.PAWN_LETTER:   "Pawn"
-    }
-    dict_entry = strings_dict.get(chess.piece_letter(from_file, from_rank), "")
+}
+
+
+def output_attacking_move(chess: Game, who_are_you: int,
+                          from_file: str, from_rank: str,
+                          to_file: str, to_rank: str) -> str:
+    """
+    Create a output message for the current chess move
+    Showing who played what, the from square and the to square
+    """
+
+    dict_entry = STRINGS_DICT.get(chess.piece_letter(from_file, from_rank), "")
     print_string = (from_file + from_rank + "-" + to_file + to_rank
                     + " Piece: " + dict_entry)
 
@@ -1026,9 +1029,10 @@ def handle_evaluated_castling_move(chess, computer_move_finalised, the_tuple):
     return computer_move_finalised
 
 
-def finalise_en_passant_move_from_inputfile(chess,
-                                            attacking_piece_letter,
-                                            taken):
+# TODO shorten name/match case
+def finalise_en_passant_move_from_inputfile(chess: Game,
+                                            attacking_piece_letter: str,
+                                            taken: int) -> str:
     """
     For testing purposes Chess moves are read from an input file
     Therefore, if this option is ON
@@ -1073,7 +1077,8 @@ def finalise_en_passant_move_from_inputfile(chess,
     return do_next
 
 
-def handle_en_passant_from_keyboard(chess, from_file, from_rank,
+def handle_en_passant_from_keyboard(chess,
+                                    from_file, from_rank,
                                     to_file, to_rank):
     """
     Check whether the Player has entered an En Passant move

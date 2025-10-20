@@ -9,6 +9,7 @@ the formatting, displaying and output of chess moves are placed here
 Will place any other miscellaneous routines here
 """
 
+from typing import NoReturn
 import constants
 from game import Game
 import moves as m
@@ -486,7 +487,7 @@ def append_to_output_stream(astring):
     Game.output_stream += astring
 
 
-def goodbye():
+def goodbye() -> NoReturn:
     """
     End of Game Message
     """
@@ -497,7 +498,7 @@ def goodbye():
     quit()
 
 
-def computer_resigns():
+def computer_resigns() -> NoReturn:
     """
     Computer has determined that its next course of action is to
     Resign! It cannot win!
@@ -548,7 +549,7 @@ def input_status_message(message):
     sleep(3)
 
 
-def is_error_from_input_file():
+def is_error_from_input_file() -> None:
     """
     Display a general message if an erroneous chess move
     had been read from the input file
@@ -574,7 +575,7 @@ def test_if_input_is_castling(chess, input_string):
     do_next = "pass"
     input_string = input_string.upper()
     #      r"\A((O-O-O)|(O-O)|(0-0-0)|(0-0))\Z"
-    if not constants.castling_keyboard_pattern.match(input_string):
+    if not constants.CASTLING_KEYBOARD_PATTERN.match(input_string):
         # Not a Castling move. Determine what this chess move is
         return do_next
 
@@ -595,7 +596,9 @@ def test_if_input_is_castling(chess, input_string):
     return do_next
 
 
-def handle_player_move_from_keyboard(chess):
+def handle_player_move_from_keyboard(
+     chess: Game
+     ) -> tuple[str | None] | NoReturn:
     """
     Validate the chess move entered by the Player
     via the keyboard
@@ -619,6 +622,7 @@ def handle_player_move_from_keyboard(chess):
             # Since it was not Checkmate, Deem it a draw!
             if not Game.output_stream.endswith(constants.SPACE):
                 Game.output_stream += constants.SPACE
+            # TODO FEN
             append_to_output_stream(constants.DRAW)
             f.output_all_chess_moves()
 
@@ -641,7 +645,7 @@ def handle_player_move_from_keyboard(chess):
     lower_string = input_string.lower()
     if (len(lower_string) != 4
         #               Pattern: ([a-h][1-8]){2}
-       or not constants.chess_move_pattern.match(lower_string)):
+       or not constants.CHESS_MOVE_PATTERN.match(lower_string)):
         chess.display("")
         print("I do not understand this input:", input_string)
         print("Format of Chess moves ought to be 4 characters e.g. e2e4")

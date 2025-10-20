@@ -9,7 +9,9 @@ This module provides fundamental bitboard operations including:
 """
 
 import numpy as np
-from wake_constants import Rival
+
+from wake_constants import Rival, ALGEBRAIC_SQUARE_MAP
+from extras import CustomException
 
 # Constants
 BOARD_SIZE = 8
@@ -129,7 +131,7 @@ def bitscan_reverse(bitboard: np.uint64) -> np.uint64 | int:
         return np.uint64(0)
 
     if not bitboard:
-        raise Exception("Cannot reverse scan on empty bitboard")
+        raise CustomException("Cannot reverse scan on empty bitboard")
 
     result = np.uint64(0)
 

@@ -196,7 +196,7 @@ class Game:
 
         return getattr(self.board[the_index], "sign", constants.BLANK)
 
-    def piece_value(self, the_index, rank=""):
+    def piece_value(self, the_index: str, rank: str = "") -> int:
         """
         Determine the numerical value of the piece on the square
         Blank squares are depicted as None
@@ -207,15 +207,16 @@ class Game:
 
         # Check first whether it is a promoted pawn
         # If so, return its promoted piece's 'value'
+        # TODO RE PAWN PROMOTION
         thevalue = getattr(self.board[the_index], "promoted_value", None)
         if thevalue is None:
             thevalue = getattr(self.board[the_index], "value", constants.BLANK)
         return thevalue
 
-    def piece_letter(self, the_index, rank=""):
+    def piece_letter(self, the_index: str, rank: str = "") -> str:
         """
         Determine the letter of the piece on the square
-        Blank squares are depicted as None
+        Blank squares are depicted as ""
         """
 
         if rank:
@@ -226,7 +227,7 @@ class Game:
         theletter = getattr(self.board[the_index], "promoted_letter", None)
         if theletter is None:
             theletter = getattr(self.board[the_index],
-                                "letter", constants.BLANK)
+                                "letter", "")
         return theletter
 
     def showboard(self):

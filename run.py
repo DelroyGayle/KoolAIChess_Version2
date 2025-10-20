@@ -11,6 +11,8 @@ Menezes' QBASIC program can be found at
 
 """
 
+from typing import Optional, NoReturn
+
 import constants
 import piece
 from game import Game
@@ -24,7 +26,9 @@ from extras import CustomException, in_check, is_it_checkmate
 from extras import finalise_computer_move
 from collections import deque
 from functools import cache
+from wake_constants import ALGEBRAIC_SQUARE_MAP
 from wake_game import clear_screen, WakeGame
+from wake_move import Move
 
 
 def handle_internal_error():
@@ -220,6 +224,23 @@ def undo_pawn_promotions(chess):
         del chess.board[the_index].promoted_letter
         # empty the set
     Game.undo_stack[-1].clear()
+
+
+def convert_to_wake_format(wake_game: WakeGame,
+                           from_file: str, from_rank: str,
+                           to_file: str, to_rank: str) -> Move | NoReturn:
+    """ Convert the move into the WakeEngine format """
+
+    from_square_str = from_file + from_rank
+    to_square_str = to_file + to_rank
+    from_square = ALGEBRAIC_SQUARE_MAP.get(from_square_str)
+    to_square = ALGEBRAIC_SQUARE_MAP.get(to_square_str)
+    move_piece = wake_game.position.get_piece_on_square(from_square)
+    if not move_piece:
+        raise CustomException("Internal Error: Unexpected blank piece")
+
+    newmove = Move(move_piece, squares=(from_square, to_square))
+    return newmove
 
 
 def do_evaluation(chess, level, piece_sign, prune_factor,
@@ -448,15 +469,11 @@ def execute_computer_move(chess, from_file, from_rank, to_file, to_rank):
                                             to_file, to_rank, taken)
 
 
-def process_computer_move(chess, from_file, from_rank, to_file, to_rank):
+def process_computer_move(chess: Game, from_file: str, from_rank: str,
+                          to_file: str, to_rank: str):
     """
     This routine handles the playing of the Computer's move
     """
-
-    move_finalised = False
-    just_performed_castling = False
-    attacking_piece_letter = ""
-    taken = None
 
     if Game.player_first_move:
         # Player goes first so on the very first iteration
@@ -465,6 +482,7 @@ def process_computer_move(chess, from_file, from_rank, to_file, to_rank):
         return
 
     # From this point onwards, process the Computer's move
+    move_finalised = False
 
     # king on king end game?
     # Stalemate?
@@ -577,14 +595,179 @@ def finalise_player_move(chess, it_is_a_castling_move,
     e.append_to_output_stream(Game.output_chess_move + constants.SPACE)
 
 
-def player_move_validation_loop(chess, from_file, from_rank, to_file, to_rank):
+def player_move_validation_loop(chess: Game, wake_game: WakeGame,
+                                from_file: str, from_rank: str,
+                                to_file: str, to_rank: str) -> None:
     """
     Input Validation of the Player's Move
     Main Validation Loop
     """
 
-    computer_move_finalised = False
-    just_performed_castling = False
+    attacking_piece_letter = ""
+    print_string = ""
+    Game.current_print_string = ""
+    Game.show_taken_message = ""
+    taken = None
+
+    while True:
+
+        # TODO
+        Game.reading_game_file = False  # TODO
+
+        if not Game.reading_game_file:
+            # In the case of No. 2)
+            # fetch the next move from the player from the keyboard
+            (do_next, lower_string) = e.handle_player_move_from_keyboard(chess)
+            if do_next == "return":
+                return
+            if do_next == "continue":
+                continue
+            # else do_next is "pass"
+
+            # Determine the file and rank of each board name
+            # e.g. e2 ==> file 'e', rank '2'
+            from_file = lower_string[0]
+            from_rank = lower_string[1]
+            to_file = lower_string[2]
+            to_rank = lower_string[3]
+
+        else:
+            # In the case of No. 1)
+            # If the move was read from the input file
+            # populate the relevant values
+            # Note: although it is fair to assume that ALL the Chess Moves
+            # in the input file are legal
+            # Nevertheless the read input file's moves will be validated
+            # as if the user had entered them from the keyboard
+
+            # Determine the file and rank of each board name
+            # e.g. e2 ==> file 'e', rank '2'
+            from_file = Game.new_from_file
+            from_rank = Game.new_from_rank
+            to_file = Game.new_to_file
+            to_rank = Game.new_to_rank
+
+        attacking_piece_letter = chess.piece_letter(from_file, from_rank)
+
+        print_string = m.output_attacking_move(chess, constants.PLAYER,
+                                               from_file, from_rank,
+                                               to_file, to_rank)
+        Game.current_print_string = print_string
+
+        piece_value = chess.piece_value(from_file, from_rank)
+
+        # Loop until a valid move is played
+        # If an erroneous move was read from the input file,
+        # then there will be no further input from this file
+
+        if piece_value == constants.BLANK:  # BLANK SQUARE
+            chess.display(print_string)
+            print("There is no piece to be played, instead a Blank Square")
+            e.is_error_from_input_file()
+            continue
+
+        if piece_value < 0:  # negative numbers are the Computer's Pieces
+            chess.display(print_string)
+            print("This is not your piece to move")
+            e.is_error_from_input_file()
+            continue
+
+        # Convert the move into the WakeEngine format
+        wake_move = convert_to_wake_format(wake_game,
+                                           from_file, from_rank,
+                                           to_file, to_rank)
+        move_result = wake_game.position.make_move(wake_move)
+        print(move_result)
+        sleep(15)
+        quit()
+
+        # Check whether the Player entered an En Passant move
+        # 'print_string' N/A since the En Passant routines
+        # will display their own messages using
+        # 'attacking_piece_letter' and 'taken'
+        do_next = m.handle_en_passant_from_keyboard(chess,
+                                                    from_file, from_rank,
+                                                    to_file, to_rank)
+        if do_next == "return":
+            # Valid En Passant Move
+            # Inform Player that Kool AI is thinking!
+            print("I am evaluating my next move...")
+            return
+
+        if do_next == "continue":
+            # Invalid En Passant Move
+            continue
+
+        # else do_next is "pass"
+        # That is, the Player's move was not an En Passant Move at all
+
+        # Check legality of Player's move
+        # If legal, the move is played
+        (illegal,
+         illegal_because_in_check,
+         taken) = is_player_move_illegal(chess,
+                                         from_file, from_rank,
+                                         to_file, to_rank)
+        if illegal_because_in_check:
+            if not Game.it_is_checkmate:
+                chess.display(print_string)
+                print("Illegal move because you are in check")
+            else:
+                chess.display(print_string)
+                print("Illegal move because it is Checkmate!")
+
+            # Pause the computer so that the Player can read the message
+            sleep(constants.SLEEP_VALUE)
+            continue
+
+        if illegal:
+            chess.display(print_string)
+            print("Illegal move")
+            # Pause the computer so that the Player can read the message
+            sleep(constants.SLEEP_VALUE)
+            continue
+
+        # Has the king been moved?
+        # Has a rook been moved?
+        m.record_if_king_or_rook_has_moved(chess, constants.PLAYER,
+                                           from_file, from_rank,
+                                           to_file, to_rank)
+
+        # As the opponent advanced a pawn two squares?
+        # If yes, record the pawn's position
+        m.record_pawn_that_advanced_by2(chess, constants.PLAYER,
+                                        from_file, from_rank,
+                                        to_file, to_rank)
+
+        # Increment the move count
+        # Determine whether the Computer is in Check
+        # Convert player's chess move for output
+        # Output the chess move
+        finalise_player_move(chess, False,
+                             from_file, from_rank, to_file, to_rank,
+                             print_string, attacking_piece_letter, taken)
+
+        # Valid move has been played - show the updated board
+        # Display the Player's Move
+        # Pause so that the Player
+        # can see the description of the move that the Player chose
+        # Inform Player that Kool AI is thinking!
+        if not Game.reading_game_file:
+            print("I am evaluating my next move...")
+            sleep(constants.SLEEP_VALUE)
+        else:
+            sleep(constants.COMPUTER_FILEIO_SLEEP_VALUE)
+
+        return
+
+
+def player_move_validation_loopX(chess: Game, from_file: str, from_rank: str,
+                                 to_file: str, to_rank: str):
+    """
+    Input Validation of the Player's Move
+    Main Validation Loop
+    """
+
     attacking_piece_letter = ""
     print_string = ""
     Game.current_print_string = ""
@@ -618,7 +801,8 @@ def player_move_validation_loop(chess, from_file, from_rank, to_file, to_rank):
         # else do_next is "pass"
         # which means either
         # 1) A Valid Chess Move was read from file or
-        # 2) Not reading from input file at all i.e. fetch move from keyboard
+        # 2) Not reading from input file at all
+        # i.e. fetch the next move from keyboard
 
         # *** EN PASSANT ***
         # In the case of No. 1)
@@ -627,11 +811,12 @@ def player_move_validation_loop(chess, from_file, from_rank, to_file, to_rank):
         # Was this chess move, an En Passant move?
 
         # Keep linter happy - shorten name
-        funcname = m.finalise_en_passant_move_from_inputfile
+        function_name = m.finalise_en_passant_move_from_inputfile
+        # TODO shorten
 
-        do_next = funcname(chess,
-                           constants.PAWN_LETTER,
-                           constants.PAWN_VALUE)
+        do_next = function_name(chess,
+                                constants.PAWN_LETTER,
+                                constants.PAWN_VALUE)
         if do_next == "return":
             # The En Passant move read from file
             # was valid and it has been performed
@@ -670,6 +855,9 @@ def player_move_validation_loop(chess, from_file, from_rank, to_file, to_rank):
             # in the input file are legal
             # Nevertheless the read input file's moves will be validated
             # as if the user had entered them from the keyboard
+
+            # Determine the file and rank of each board name
+            # e.g. e2 ==> file 'e', rank '2'
             from_file = Game.new_from_file
             from_rank = Game.new_from_rank
             to_file = Game.new_to_file
@@ -780,14 +968,20 @@ def player_move_validation_loop(chess, from_file, from_rank, to_file, to_rank):
         return
 
 
-def play_2_moves(chess, from_file, from_rank, to_file, to_rank, result):
+def play_2_moves(chess: Game,
+                 wake_game: WakeGame,
+                 from_file: str, from_rank: str,
+                 to_file: str, to_rank: str, result: Optional[int]):
+    # TODO 'result' not used
+
     """
     1) Play and show the result of the Computer move
     2) Then get, validate and play the Player's move
     """
 
     process_computer_move(chess, from_file, from_rank, to_file, to_rank)
-    player_move_validation_loop(chess, from_file, from_rank, to_file, to_rank)
+    player_move_validation_loop(chess, wake_game,
+                                from_file, from_rank, to_file, to_rank)
 
 
 def main_part2():
@@ -806,7 +1000,7 @@ def main_part2():
     wake_game = WakeGame()
 
     # TODO - Test file handling with WakeEngine
-    f.open_input_file()
+    # f.open_input_file()
 
     chess.fillboard()
     clear_screen()
@@ -815,6 +1009,7 @@ def main_part2():
     # Game Loop
     while True:
         play_2_moves(chess,
+                     wake_game,
                      Game.best_from_file,
                      Game.best_from_rank,
                      Game.best_to_file,

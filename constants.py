@@ -139,40 +139,40 @@ CASTLING_EP_SLEEP_VALUE = 3
 COMPUTER_FILEIO_SLEEP_VALUE = 4
 
 # Regular Expressions
-parens_pattern = re.compile(r"[()]")
-percent_pattern = re.compile(r"(\A%)|(\n%)")
-en_passant_pattern = re.compile(r"\A(e\.p\.[ \n]*)+")
-nag_pattern = re.compile(r"\A\$[0-9]+")
-chess_move_suffix_pattern = re.compile(r"\A[A-Za-z0-9+#=:\-]*")
-castling_inputfile_pattern = re.compile(r"\A((O-O-O)|(O-O)|(0-0-0)|(0-0))")
-game_termination_pattern = re.compile(r"\A((1-0)|(0-1)|(1/2-1/2)|[*])")
-number_periods_pattern = re.compile(r"\A([0-9]+|[.]+)")
-move_number_pattern = re.compile(r"\A([0-9]+)[. ]*")
-move_number_suffix_pattern = re.compile(r"\A[.][ \n]*")
-castling_keyboard_pattern = re.compile(r"\A((O-O-O)|(O-O)|(0-0-0)|(0-0))\Z")
-chess_move_pattern = re.compile(r"([a-h][1-8]){2}")
+PARENS_PATTERN = re.compile(r"[()]")
+PERCENT_PATTERN = re.compile(r"(\A%)|(\n%)")
+EN_PASSANT_PATTERN = re.compile(r"\A(e\.p\.[ \n]*)+")
+NAG_PATTERN = re.compile(r"\A\$[0-9]+")
+CHESS_MOVE_SUFFIX_PATTERN = re.compile(r"\A[A-Za-z0-9+#=:\-]*")
+CASTLING_INPUTFILE_PATTERN = re.compile(r"\A((O-O-O)|(O-O)|(0-0-0)|(0-0))")
+GAME_TERMINATION_PATTERN = re.compile(r"\A((1-0)|(0-1)|(1/2-1/2)|[*])")
+NUMBER_PERIODS_PATTERN = re.compile(r"\A([0-9]+|[.]+)")
+MOVE_NUMBER_PATTERN = re.compile(r"\A([0-9]+)[. ]*")
+MOVE_NUMBER_SUFFIX_PATTERN = re.compile(r"\A[.][ \n]*")
+CASTLING_KEYBOARD_PATTERN = re.compile(r"\A((O-O-O)|(O-O)|(0-0-0)|(0-0))\Z")
+CHESS_MOVE_PATTERN = re.compile(r"([a-h][1-8]){2}")
 
 # 1
-long_notation_pattern = re.compile(r"\A([KQRBN]?)([a-h][1-8])([a-h][1-8])",
+LONG_NOTATION_PATTERN = re.compile(r"\A([KQRBN]?)([a-h][1-8])([a-h][1-8])",
                                    flags=re.ASCII)
 
 # 2
-capture_2squares_pattern = re.compile(r"\A([KQRBN]?)([a-h][1-8])x([a-h][1-8])",
+CAPTURE_2SQUARES_PATTERN = re.compile(r"\A([KQRBN]?)([a-h][1-8])x([a-h][1-8])",
                                       flags=re.ASCII)
 # 3
-one_square_pattern = re.compile(r"\A([KQRBN]?)([a-h][1-8])",
+ONE_SQUARE_PATTERN = re.compile(r"\A([KQRBN]?)([a-h][1-8])",
                                 flags=re.ASCII)
 # 4
-pawn_capture_pattern = re.compile(r"\A([a-h])x([a-h][1-8])",
+PAWN_CAPTURE_PATTERN = re.compile(r"\A([a-h])x([a-h][1-8])",
                                   flags=re.ASCII)
 # 5
-nonpawn_capture_pattern = re.compile(r"\A([KQRBN])x([a-h][1-8])",
+NONPAWN_CAPTURE_PATTERN = re.compile(r"\A([KQRBN])x([a-h][1-8])",
                                      flags=re.ASCII)
 
 # 6
-file_pattern = re.compile(r"\A([KQRBN])([a-h])x?([a-h][1-8])",
+FILE_PATTERN = re.compile(r"\A([KQRBN])([a-h])x?([a-h][1-8])",
                           flags=re.ASCII)
 
 # 7
-rank_pattern = re.compile(r"\A([KQRBN])([1-8])x?([a-h][1-8])",
+RANK_PATTERN = re.compile(r"\A([KQRBN])([1-8])x?([a-h][1-8])",
                           flags=re.ASCII)
