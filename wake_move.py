@@ -6,14 +6,14 @@ class Move:
     Represents the motion of a piece from an origin square to a target square
     """
 
-    def __init__(self, piece=None, squares=None):
-        self.piece_type_number = piece
+    def __init__(self, piece_type_number=None, squares=None):
+        self.piece_type_number = piece_type_number
         if squares is not None:
-            self.from_sq = squares[FROM]
-            self.to_sq = squares[TO]
+            self.from_square = squares[FROM]
+            self.to_square = squares[TO]
         else:
-            self.from_sq = None
-            self.to_sq = None
+            self.from_square = None
+            self.to_square = None
         self.is_capture = False
         self.is_en_passant = False
         self.is_castling = False
@@ -33,8 +33,8 @@ class MoveResult:
     """
 
     def __init__(self):
-        self.is_checkmate = False
         self.is_king_in_check = False
+        self.is_checkmate = False
         self.is_stalemate = False
         self.is_draw_claim_allowed = False
         self.is_illegal_move = False

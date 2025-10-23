@@ -171,6 +171,36 @@ def is_player_move_illegal(chess, from_file, from_rank, to_file, to_rank):
     return (True, None, None)
 
 
+def make_PLAYER_move(chess: Game,
+                     from_file: str,
+                     from_rank: str,
+                     to_file: str,
+                     to_rank: str) -> Optional[int]:
+    """
+    Update the board with the PLAYER (white) move.
+    Please note: this move had already been validated validated.
+    """
+
+    piece_sign = constants.PLAYER  # white piece
+    from_square = from_file + from_rank
+    to_square = to_file + to_rank
+
+    """
+    Print a Message if a piece is about to be taken
+    At the same time,
+    Check whether the Computer's King is about to be "literally taken"
+    If so, this indicates an Internal Logic Error
+    """
+
+    taken = is_piece_taken(chess, to_file, to_rank, piece_sign)
+    # No error raised - so the above test passed
+
+    # Make the Player's move
+    e.make_move_to_square(chess,
+                          from_square, to_square, to_file, to_rank)
+    return taken
+
+
 @cache
 def coords_formula(file, rank):
     """
@@ -229,20 +259,21 @@ def undo_pawn_promotions(chess):
     Game.undo_stack[-1].clear()
 
 
-def convert_to_wake_format(wake_game: WakeGame,
-                           from_file: str, from_rank: str,
-                           to_file: str, to_rank: str) -> Move | NoReturn:
+def create_wake_move(wake_game: WakeGame,
+                     from_file: str, from_rank: str,
+                     to_file: str, to_rank: str) -> Move | NoReturn:
     """ Convert the move into the WakeEngine format """
 
     from_square_str = from_file + from_rank
     to_square_str = to_file + to_rank
     from_square = ALGEBRAIC_SQUARE_MAP.get(from_square_str)
     to_square = ALGEBRAIC_SQUARE_MAP.get(to_square_str)
-    move_piece = wake_game.position.get_piece_on_square(from_square)
-    if not move_piece:
+    move_piece_typenum = (
+        wake_game.position.get_piece_typenum_on_square(from_square))
+    if move_piece_typenum is None:
         raise CustomException("Internal Error: Unexpected blank piece")
 
-    newmove = Move(move_piece, squares=(from_square, to_square))
+    newmove = Move(move_piece_typenum, squares=(from_square, to_square))
     return newmove
 
 
@@ -638,7 +669,7 @@ def player_move_validation_loop(chess: Game, wake_game: WakeGame,
             to_file = lower_string[2]
             to_rank = lower_string[3]
 
-        else:
+        else:  # TODO REMOVE
             # In the case of No. 1)
             # If the move was read from the input file
             # populate the relevant values
@@ -680,71 +711,53 @@ def player_move_validation_loop(chess: Game, wake_game: WakeGame,
             continue
 
         # Convert the move into the WakeEngine format
-        wake_move = convert_to_wake_format(wake_game,
-                                           from_file, from_rank,
-                                           to_file, to_rank)
-        move_result = wake_game.position.make_move(wake_move)
-        print(move_result)  # TODO
-        sleep(15)
-        quit()
-
-        # Check whether the Player entered an En Passant move
-        # 'print_string' N/A since the En Passant routines
-        # will display their own messages using
-        # 'attacking_piece_letter' and 'taken'
-        do_next = m.handle_en_passant_from_keyboard(chess,
-                                                    from_file, from_rank,
-                                                    to_file, to_rank)
-        if do_next == "return":
-            # Valid En Passant Move
-            # Inform Player that Kool AI is thinking!
-            print("I am evaluating my next move...")
-            return
-
-        if do_next == "continue":
-            # Invalid En Passant Move
-            continue
-
-        # else do_next is "pass"
-        # That is, the Player's move was not an En Passant Move at all
+        wake_move = create_wake_move(wake_game,
+                                     from_file, from_rank,
+                                     to_file, to_rank)
 
         # Check legality of Player's move
         # If legal, the move is played
-        (illegal,
-         illegal_because_in_check,
-         taken) = is_player_move_illegal(chess,
-                                         from_file, from_rank,
-                                         to_file, to_rank)
-        if illegal_because_in_check:
-            if not Game.it_is_checkmate:
-                chess.display(print_string)
-                print("Illegal move because you are in check")
-            else:
-                chess.display(print_string)
-                print("Illegal move because it is Checkmate!")
+        # TODO N/A
+        move_result = wake_game.position.wake_make_move(wake_move)
 
+        if move_result.is_king_in_check:
+            chess.display(print_string)
+            print("Illegal move because you are in check")
             # Pause the computer so that the Player can read the message
             sleep(constants.SLEEP_VALUE)
             continue
 
-        if illegal:
+        if move_result.is_illegal_move:
             chess.display(print_string)
             print("Illegal move")
             # Pause the computer so that the Player can read the message
             sleep(constants.SLEEP_VALUE)
             continue
 
-        # Has the king been moved?
-        # Has a rook been moved?
-        m.record_if_king_or_rook_has_moved(chess, constants.PLAYER,
-                                           from_file, from_rank,
-                                           to_file, to_rank)
+        if move_result.is_checkmate:
+            chess.display(print_string)
+            print("Illegal move because it is Checkmate!")
+            # TODO END THE GAME
+            wake_game.score[wake_game.position.color_to_move] = 1
+            wake_game.is_over = True
+            # Pause the computer so that the Player can read the message
+            sleep(constants.SLEEP_VALUE)
+            continue
 
-        # As the opponent advanced a pawn two squares?
-        # If yes, record the pawn's position
-        m.record_pawn_that_advanced_by2(chess, constants.PLAYER,
-                                        from_file, from_rank,
-                                        to_file, to_rank)
+        if move_result.is_stalemate:
+            print("Stalemate (Draw)")
+            # TODO END THE GAME
+            wake_game.score = [0.5, 0.5]
+            wake_game.is_over = True
+            # Pause the computer so that the Player can read the message
+            sleep(constants.SLEEP_VALUE)
+            continue
+
+        # Update the Board with the new move
+        taken = make_PLAYER_move(chess,
+                                 from_file, from_rank,
+                                 to_file, to_rank)
+        print()
 
         # Increment the move count
         # Determine whether the Computer is in Check
@@ -764,6 +777,43 @@ def player_move_validation_loop(chess: Game, wake_game: WakeGame,
             sleep(constants.SLEEP_VALUE)
         else:
             sleep(constants.COMPUTER_FILEIO_SLEEP_VALUE)
+
+        return
+
+        # TODO: REMOVE WHAT FOLLOWS
+
+        # Check whether the Player entered an En Passant move
+        # 'print_string' N/A since the En Passant routines
+        # will display their own messages using
+        # 'attacking_piece_letter' and 'taken'
+        # do_next = m.handle_en_passant_from_keyboard(chess,
+        #                                             from_file, from_rank,
+        #                                             to_file, to_rank)
+        do_next = "pass"  # N/A
+        if do_next == "return":
+            # Valid En Passant Move
+            # Inform Player that Kool AI is thinking!
+            print("I am evaluating my next move...")
+            return
+
+        if do_next == "continue":
+            # Invalid En Passant Move
+            continue
+
+        # else do_next is "pass"
+        # That is, the Player's move was not an En Passant Move at all
+
+        # Has the king been moved?
+        # Has a rook been moved?
+        m.record_if_king_or_rook_has_moved(chess, constants.PLAYER,
+                                           from_file, from_rank,
+                                           to_file, to_rank)
+
+        # As the opponent advanced a pawn two squares?
+        # If yes, record the pawn's position
+        m.record_pawn_that_advanced_by2(chess, constants.PLAYER,
+                                        from_file, from_rank,
+                                        to_file, to_rank)
 
         return
 

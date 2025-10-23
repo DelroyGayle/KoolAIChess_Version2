@@ -815,6 +815,9 @@ def make_move_to_square(chess, from_square, to_square, to_file, to_rank):
 
     # erase square vacated
     chess.board[from_square] = None
+    return
+
+    # TODO - HANDLE PAWN PROMOTION
     # promote pawn if it reaches the board edge
     any_promotion(chess, to_file, to_rank)
 
