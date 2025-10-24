@@ -194,8 +194,8 @@ class Position:
     # -------------------------------------------------------------
 
     # TODO
-    def wake_make_move(self, move) -> MoveResult:
-        # if self.rival_to_move != move.rival_identity_identity:  # TODO
+    def wake_makemove(self, move) -> MoveResult:
+        # if self.rival_to_move != move.rival_identity:  # TODO
         #     return self.make_illegal_move_result("Not your move!")
 
         # original_position = copy.deepcopy(self.__dict__) TODO
@@ -252,15 +252,15 @@ class Position:
             self.reset_state_to(original_position)
             return self.make_king_in_check_result()
 
-        other_player = (Rival.COMPUTER if move.rival_identity == Rival.PLAYER
-                        else Rival.PLAYER)
+        other_rival = (Rival.COMPUTER if move.rival_identity == Rival.PLAYER
+                       else Rival.PLAYER)
 
-        if (self.king_in_check[other_player]
-           and not self.any_legal_moves(other_player)):
+        if (self.king_in_check[other_rival]
+           and not self.any_legal_moves(other_rival)):
             return self.make_checkmate_result()
 
-        if (not self.king_in_check[other_player]
-           and not self.any_legal_moves(other_player)):
+        if (not self.king_in_check[other_rival]
+           and not self.any_legal_moves(other_rival)):
             return self.make_stalemate_result()
 
         # 50-move rule draw (50 moves by each player = 100 half-moves)
@@ -1193,8 +1193,8 @@ class Position:
 
         # Handle removing own piece targets
         occupied_squares = {
-            Rival.COMPUTER: self.board.computer_pieces_bb,
             Rival.PLAYER: self.board.player_pieces_bb,
+            Rival.COMPUTER: self.board.computer_pieces_bb,
         }
 
         # Remove own piece targets
@@ -1592,6 +1592,225 @@ class Position:
             return self.mailbox[from_square]
         return None
 
+    # -------------------------------------------------------------
+    # NEW FUNCTIONALITY BASED ON 'any_legal_moves()'
+    # AND has_XXX_move() ROUTINES ABOVE
+    # THE FUNCTION IS TO GENERATED ALL THE AVAILABLE LEGAL PIECE MOVES
+    # THe GENERATED LIST WILL E USED BY MY MINIMAX ALGORITHM
+    # -------------------------------------------------------------
+
+    def all_legal_moves_list(self, rival_to_move: int) -> list[tuple]:
+        """
+        Returns a list of all the available legal moves (if any)
+        for a particular colour i.e. 'rival_to_move'
+       """
+
+        all_moves_list = self.all_pawn_moves(rival_to_move)
+        all_moves_list.extend(self.all_king_moves(rival_to_move))
+        all_moves_list.extend(self.all_rook_moves(rival_to_move))
+        all_moves_list.extend(self.all_queen_moves(rival_to_move))
+        all_moves_list.extend(self.all_knight_moves(rival_to_move))
+        all_moves_list.extend(self.all_bishop_moves(rival_to_move))
+        return all_moves_list
+
+    def all_king_moves(self, rival_to_move: int) -> list[tuple]:
+        """
+        Return a list of all king moves that fit the following criteria:
+        True if there is a legal king move
+        for the given colour/rival from the given square
+        in the current Position instance
+        """
+        king_rival_map = {
+            Rival.PLAYER: (self.player_king_attacks, Piece.wK),
+            Rival.COMPUTER: (self.computer_king_attacks, Piece.bK),
+        }
+
+        attacked_squares = {
+            Rival.PLAYER: self.player_attacked_squares,
+            Rival.COMPUTER: self.computer_attacked_squares,
+        }
+
+        not_rival_to_move = switch_rival(rival_to_move)
+        king_attacks = (
+            king_rival_map[rival_to_move][THE_ATTACK] &
+            ~attacked_squares[not_rival_to_move]
+        )
+        king_piece = king_rival_map[rival_to_move][THE_PIECE]
+
+        # if no attacks, return []
+        if not king_attacks.any():
+            print("WHYK")
+            quit()
+            return []
+
+        king_piece_map_copy = self.piece_map[king_piece].copy()
+        king_from_square = king_piece_map_copy.pop()
+
+        king_squares = get_squares_from_bitboard(king_attacks)
+
+        moves_list = []
+        for to_square in king_squares:
+            move = Move(king_piece, (king_from_square, to_square))
+            move = evaluate_move(move, copy.deepcopy(self))
+            if not move.is_illegal_move:
+                moves_list.append((king_from_square, to_square))
+
+        print("DONE K", moves_list)
+        quit()
+        return moves_list
+
+    def all_rooks_move(self, rival_to_move: int) -> list[tuple]:
+        rook_rival_map = {
+            Rival.PLAYER: (self.player_rook_attacks, Piece.wR),
+            Rival.COMPUTER: (self.computer_rook_attacks, Piece.bR),
+        }
+
+        rook_attacks = rook_rival_map[rival_to_move][THE_ATTACK]
+        rook_piece = rook_rival_map[rival_to_move][THE_PIECE]
+
+        # if no attacks, return []
+        if not rook_attacks.any():
+            print("WHYR")
+            quit()
+            return []
+
+        moves_list = []
+        current_rook_locations = self.piece_map[rook_piece]
+        rook_attack_squares = get_squares_from_bitboard(rook_attacks)
+
+        for rook_from_square in list(current_rook_locations):
+            for to_square in rook_attack_squares:
+                move = Move(rook_piece, (rook_from_square, to_square))
+                move = evaluate_move(move, copy.deepcopy(self))
+                if not move.is_illegal_move:
+                    moves_list.append((rook_from_square, to_square))
+
+        print("DONE R", moves_list)
+        quit()
+        return moves_list
+
+    def all_queen_move(self, rival_to_move: int) -> list[tuple]:
+        queen_rival_map = {
+            Rival.PLAYER: (self.player_queen_attacks, Piece.wQ),
+            Rival.COMPUTER: (self.computer_queen_attacks, Piece.bQ),
+        }
+
+        queen_attacks = queen_rival_map[rival_to_move][THE_ATTACK]
+        queen_piece = queen_rival_map[rival_to_move][THE_PIECE]
+
+        # if no attacks, return []
+        if not queen_attacks.any():
+            print("WHYQ")
+            quit()
+            return []
+
+        moves_list = []
+        current_queen_locations = self.piece_map[queen_piece]
+        queen_squares = get_squares_from_bitboard(queen_attacks)
+
+        for queen_from_square in list(current_queen_locations):
+            for to_square in queen_squares:
+                move = Move(queen_piece, (queen_from_square, to_square))
+                move = evaluate_move(move, copy.deepcopy(self))
+                if not move.is_illegal_move:
+                    moves_list.append((queen_from_square, to_square))
+
+        print("DONE Q", moves_list)
+        quit()
+        return moves_list
+
+    def all_knight_move(self, rival_to_move: int) -> list[tuple]:
+        knight_rival_map = {
+            Rival.PLAYER: (self.player_knight_attacks, Piece.wN),
+            Rival.COMPUTER: (self.computer_knight_attacks, Piece.bN),
+        }
+
+        moves_list = []
+        knight_attacks = knight_rival_map[rival_to_move][THE_ATTACK]
+        knight_piece = knight_rival_map[rival_to_move][THE_PIECE]
+
+        # if no attacks, return []
+        if not knight_attacks.any():
+            print("WHYN")
+            quit()
+            return []
+
+        current_knight_locations = list(self.piece_map[knight_piece])
+        knight_squares = get_squares_from_bitboard(knight_attacks)
+
+        for knight_from_square in current_knight_locations:
+            for to_square in knight_squares:
+                move = Move(knight_piece, (knight_from_square, to_square))
+                move = evaluate_move(move, copy.deepcopy(self))
+                if not move.is_illegal_move:
+                    moves_list.append((knight_from_square, to_square))
+
+        print("DONE N", moves_list)
+        quit()
+        return moves_list
+
+    def all_bishop_move(self, rival_to_move: int) -> list[tuple]:
+        bishop_rival_map = {
+            Rival.PLAYER: (self.player_bishop_attacks, Piece.wB),
+            Rival.COMPUTER: (self.computer_bishop_attacks, Piece.bB),
+        }
+
+        moves_list = []
+        bishop_attacks = bishop_rival_map[rival_to_move][THE_ATTACK]
+        bishop_piece = bishop_rival_map[rival_to_move][THE_PIECE]
+
+        # if no attacks, return []
+        if not bishop_attacks.any():
+            print("WHYB")
+            quit()
+            return []
+
+        current_bishop_locations = list(self.piece_map[bishop_piece])
+        bishop_squares = get_squares_from_bitboard(bishop_attacks)
+
+        for bishop_from_square in current_bishop_locations:
+            for to_square in bishop_squares:
+                move = Move(bishop_piece, (bishop_from_square, to_square))
+                move = evaluate_move(move, copy.deepcopy(self))
+                if not move.is_illegal_move:
+                    moves_list.append((bishop_from_square, to_square))
+
+        print("DONE B", moves_list)
+        quit()
+        return moves_list
+
+    def all_pawn_moves(self, rival_to_move: int) -> list[tuple]:
+        pawn_rival_map = {
+            Rival.PLAYER: (self.player_pawn_attacks
+                           & self.player_pawn_moves, Piece.wP),
+            Rival.COMPUTER: (self.computer_pawn_attacks
+                             & self.computer_pawn_moves, Piece.bP),
+        }
+
+        all_pawn_moves = pawn_rival_map[rival_to_move][THE_ATTACK]
+        pawn_piece = pawn_rival_map[rival_to_move][THE_PIECE]
+
+        # if no attacks, return []
+        if not all_pawn_moves.any():
+            print("WHYP")
+            quit()
+            return []
+
+        current_pawn_locations = self.piece_map[pawn_piece]
+        pawn_squares = get_squares_from_bitboard(all_pawn_moves)
+
+        moves_list = []
+        for pawn_from_square in list(current_pawn_locations):
+            for to_square in pawn_squares:
+                move = Move(pawn_piece, (pawn_from_square, to_square))
+                move = evaluate_move(move, copy.deepcopy(self))
+                if not move.is_illegal_move:
+                    moves_list.append((pawn_from_square, to_square))
+
+        print("DONE P", moves_list)
+        quit()
+        return moves_list
+
 
 def evaluate_move(move, position: Position) -> MoveResult:
     """
@@ -1643,6 +1862,7 @@ def evaluate_move(move, position: Position) -> MoveResult:
     position.evaluate_king_check()
 
     if position.king_in_check[position.rival_to_move]:
+        print("RIVALTOMOVE", position.rival_to_move)
         return position.make_illegal_move_result("own king in check")
 
     return position.make_move_result()

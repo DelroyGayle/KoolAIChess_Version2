@@ -26,7 +26,7 @@ from extras import CustomException, in_check, is_it_checkmate
 from extras import finalise_computer_move
 from collections import deque
 from functools import cache
-from wake_constants import ALGEBRAIC_SQUARE_MAP
+from wake_constants import ALGEBRAIC_SQUARE_MAP, Rival
 from wake_game import clear_screen, WakeGame
 from wake_move import Move
 
@@ -370,6 +370,8 @@ def do_evaluation(chess, level, piece_sign, prune_factor,
     return (exitloop, bestscore)
 
 
+# TODO REMOVE
+
 def evaluate(chess, level, piece_sign, prune_factor):
     """
     To quote Rod Bird:
@@ -445,6 +447,19 @@ def evaluate(chess, level, piece_sign, prune_factor):
     return bestscore  # Done!
 
 
+def minimax_evaluate(chess: Game, wake_game: WakeGame,
+                     piece_sign: int) -> int:
+    """ TODO - ADD COMMENTS """
+
+    # other_rival = (Rival.COMPUTER if move.rival_identity == Rival.PLAYER
+    #                               else Rival.PLAYER)
+    # TODO
+
+    alist = wake_game.position.all_legal_moves_list(Rival.COMPUTER)
+    print(alist)
+    quit()
+
+
 def execute_computer_move(chess, from_file, from_rank, to_file, to_rank):
     """
     Carry out the chess move that was produced
@@ -504,7 +519,7 @@ def execute_computer_move(chess, from_file, from_rank, to_file, to_rank):
 
 
 def process_computer_move(chess: Game, from_file: str, from_rank: str,
-                          to_file: str, to_rank: str):
+                          to_file: str, to_rank: str) -> None:
     """
     This routine handles the playing of the Computer's move
     """
@@ -521,7 +536,7 @@ def process_computer_move(chess: Game, from_file: str, from_rank: str,
     # king on king end game?
     # Stalemate?
     if Game.evaluation_result < constants.STALEMATE_THRESHOLD_SCORE:
-        e.computer_resigns()
+        e.computer_resigns()  # TODO RE STALEMATE
         # *** END PROGRAM ***
 
     # Are the Chess moves currently coming from an input file?
@@ -717,8 +732,7 @@ def player_move_validation_loop(chess: Game, wake_game: WakeGame,
 
         # Check legality of Player's move
         # If legal, the move is played
-        # TODO N/A
-        move_result = wake_game.position.wake_make_move(wake_move)
+        move_result = wake_game.position.wake_makemove(wake_move)
 
         if move_result.is_king_in_check:
             chess.display(print_string)
@@ -816,6 +830,8 @@ def player_move_validation_loop(chess: Game, wake_game: WakeGame,
                                         to_file, to_rank)
 
         return
+
+# TODO REMOVE BELOW:
 
 
 def player_move_validation_loopX(chess: Game, from_file: str, from_rank: str,
@@ -1077,16 +1093,20 @@ def main_part2():
         # It Grows and Shrinks with the calling of the 'evaluate' function
         # Use a 'deque' seeing that these are more efficient to use as stacks
         # than lists.
-        Game.undo_stack = deque()
+        Game.undo_stack = deque()  # TODO REMOVE
         Game.evaluating = True
 
-        Game.evaluation_result = evaluate(chess, 0,
-                                          constants.COMPUTER,
-                                          constants.EVALUATE_THRESHOLD_SCORE)
+        # TODO REPLACE WITH NEW MINIMAX
+        # Game.evaluation_result = evaluate(chess, 0,
+        #                                   constants.COMPUTER,
+        #                                   constants.EVALUATE_THRESHOLD_SCORE)
+
+        Game.evaluation_result = minimax_evaluate(chess, wake_game,
+                                                  constants.COMPUTER)
 
         # Reset variables
         Game.evaluating = False
-        Game.undo_stack = None
+        Game.undo_stack = None  # TODO REMOVE X 2
         Game.promoted_piece = ""
 
 

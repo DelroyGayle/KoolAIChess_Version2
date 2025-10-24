@@ -69,40 +69,16 @@ def get_squares_from_bitboard(bitboard: np.uint64) -> list:
 # BIT QUERYING
 # -------------------------------------------------------------
 
-
 def bitscan_forward(bitboard: np.uint64) -> int:
     """
     Returns the least significant one bit from the provided bitboard
-    :param bitboard: bitboard to scan
-    :return: int significant one bit binary string index (1-based)
+    :param bitboard: bitboard to can
+    :return: int significant one bit binary string index
     """
-    if bitboard == 0:
-        return -1  # No bits set
-
-    # Use efficient bit manipulation to find the index
-    index = 0
-    temp = np.uint64(bitboard)
-
-    # Binary search approach for O(log n) complexity
-    if temp & np.uint64(0xFFFFFFFF) == 0:
-        index += 32
-        temp >>= 32
-    if temp & np.uint64(0xFFFF) == 0:
-        index += 16
-        temp >>= 16
-    if temp & np.uint64(0xFF) == 0:
-        index += 8
-        temp >>= 8
-    if temp & np.uint64(0xF) == 0:
-        index += 4
-        temp >>= 4
-    if temp & np.uint64(0x3) == 0:
-        index += 2
-        temp >>= 2
-    if temp & np.uint64(0x1) == 0:
-        index += 1
-
-    return index + 1  # Return 1-based index to match original API
+    i = 1
+    while not (bitboard >> np.uint64(i)) % 2:
+        i += 1
+    return i
 
 
 def bitscan_reverse(bitboard: np.uint64) -> np.uint64 | int:
