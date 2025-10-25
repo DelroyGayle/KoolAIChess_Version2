@@ -734,6 +734,15 @@ class Position:
             ):
                 return False
 
+            # Need to cater for white pawn's two-squares motion forward
+            # TODO TEST
+            if (move.from_square in Rank.RANK_X2 and
+               move.from_square == move.to_square + 16):
+                square_between_bb = (set_bit(make_uint64_zero(),
+                                     move.to_square + 8))
+                if (square_between_bb & self.board.occupied_squares_bb):
+                    return False
+
             # If it's a pawn attack move, check that it
             # intersects with COMPUTER (black) pieces or en passant target
             if (move.from_square == move.to_square - 9 or
@@ -757,6 +766,15 @@ class Position:
                 moving_to_square_bb & self.board.occupied_squares_bb
             ):
                 return False
+
+            # Need to cater for black pawn's two-squares motion forward
+            # TODO TEST
+            if (move.from_square in Rank.RANK_X7 and
+               move.from_square == move.to_square - 16):
+                square_between_bb = (set_bit(make_uint64_zero(),
+                                     move.to_square - 8))
+                if (square_between_bb & self.board.occupied_squares_bb):
+                    return False
 
             # If it's a pawn attack move,
             # check that it intersects with PLAYER (white) pieces
@@ -920,8 +938,6 @@ class Position:
         if move.rival_identity == Rival.COMPUTER:
             if not (self.computer_knight_attacks & moving_to_square_bb):
                 return True
-
-        print(move.from_square, move.to_square, -1)  # TODO REMOVE P
 
         return False
 
@@ -1727,6 +1743,11 @@ class Position:
         quit()
         return moves_list
 
+    def filter_evaluate_move(self, piece, from_square, to_square):
+        move = Move(piece, (from_square, to_square))
+        move = evaluate_move(move, copy.deepcopy(self))
+        return move
+
     def all_knight_moves(self, rival_to_move: int) -> list[tuple]:
         knight_rival_map = {
             Rival.PLAYER: (self.player_knight_attacks, Piece.wN),
@@ -1751,9 +1772,18 @@ class Position:
         #  quit()  #  TODO
 
         print("KS", knight_squares)  # TODO REMOVE P
-        filtered_knight_moves = (filter(knight_moves_filter,
+        filtered_knight_moves = (filter(is_viable_knight_move,
                                  product(current_knight_locations,
                                          knight_squares)))
+
+        moves_list = [(from_square, to_square)
+                      for from_square, to_square in filtered_knight_moves
+                      if ((move := self.filter_evaluate_move(knight_piece,
+                                                         from_square,
+                                                         to_square)) and
+                          not move.is_illegal_move)]
+        print("DONE N", moves_list)
+        quit()
 
         for knight_from_square, to_square in filtered_knight_moves:
             move = Move(knight_piece, (knight_from_square, to_square))
@@ -1796,15 +1826,16 @@ class Position:
     def all_pawn_moves(self, rival_to_move: int) -> list[tuple]:
         pawn_rival_map = {
             Rival.PLAYER: (self.player_pawn_attacks
-                           & self.player_pawn_moves, Piece.wP),
+                           | self.player_pawn_moves, Piece.wP),
             Rival.COMPUTER: (self.computer_pawn_attacks
-                             & self.computer_pawn_moves, Piece.bP),
+                             | self.computer_pawn_moves, Piece.bP),
         }
 
+        print("T", get_squares_from_bitboard(self.computer_pawn_moves))
         all_pawn_moves = pawn_rival_map[rival_to_move][THE_ATTACK]
         pawn_piece = pawn_rival_map[rival_to_move][THE_PIECE]
 
-        # if no attacks, return []
+        # if no moves, return []
         if not all_pawn_moves.any():
             print("WHYP")
             quit()
@@ -1821,6 +1852,7 @@ class Position:
                 if not move.is_illegal_move:
                     moves_list.append((pawn_from_square, to_square))
 
+        print(pawn_squares)
         # TODO
         # print("DONE P", moves_list)
         # quit()
@@ -1901,8 +1933,9 @@ However, such moves were being considered 'valid' by 'all_knights_moves()'
 (Likewise 'has_knight_move()' from which most of the code of
 'all_knights_moves()' is copied from.)
 
-That is, 'has_knight_move()' does NOT check that an actual 'possible' KNIGHT move
-has been received. It simply assumes it! This 'feature' appears to be present
+That is, 'has_knight_move()' does NOT check that
+an actual 'possible' KNIGHT move has been received.
+It simply assumes it! This 'feature' appears to be present
 in Wes Doyle's original code!
 
 Solution: The difference between the FROM_SQUARE
@@ -1916,7 +1949,7 @@ IF THE FROM SQUARE IS Gx OR Hx, THE TO SQUARE CANNOT BE Ax OR Bx
 """
 
 
-def knight_moves_filter(pair: tuple[int]) -> bool:
+def is_viable_knight_move(pair: tuple[int]) -> bool:
     from_square, to_square = pair
     return ((from_square - to_square) in LEGAL_KNIGHT_DIFFERENCES and
             not ((from_square in FILES_AB and to_square in FILES_GH) or
