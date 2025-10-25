@@ -41,7 +41,7 @@ def generate_knight_attack_bb_from_square(from_square: int) -> np.uint64:
     attack_bb = make_uint64_zero()
     for i in [6, 15, 17, 10, -6, -15, -17, -10]:
         to_square = from_square + i
-        if not 0 <= to_square < 64:
+        if not (0 <= to_square < 64):
             continue
 
         attack_bb |= set_bit(attack_bb, to_square)
@@ -173,7 +173,7 @@ def generate_king_attack_bb_from_square(from_square: int) -> np.uint64:
     attack_bb = make_uint64_zero()
     for i in [-1, -7, -8, -9, 1, 7, 8, 9]:
         to_square = from_square + i
-        if not 0 <= to_square < 64:
+        if not (0 <= to_square < 64):
             continue
         attack_bb |= ONE_BIT << np.uint64(to_square)
     # Mask of wrapping
@@ -203,7 +203,7 @@ def generate_player_pawn_attack_bb_from_square(from_square: int) -> np.uint64:
     attack_bb = make_uint64_zero()
     for i in [7, 9]:
         to_square = from_square + i
-        if not 0 <= to_square < 64:
+        if not (0 <= to_square < 64):
             continue
         attack_bb |= ONE_BIT << np.uint64(to_square)
     # Mask of wrapping
