@@ -1,6 +1,7 @@
 import copy  # TODO RE copy/deepcopy
 
 import numpy as np
+from math import inf
 from itertools import product
 from typing import Optional, NoReturn
 
@@ -45,11 +46,15 @@ from wake_attacks import generate_king_attack_bb_from_square
 from wake_board import WakeBoard
 from wake_fen import generate_fen
 from wake_move import Move, MoveResult
+from wake_debug import pprint_pieces  # TODO
 
 ROOK_RIVAL_MAP = {Rival.PLAYER: Piece.wR, Rival.COMPUTER: Piece.bR}
 LEGAL_KNIGHT_DIFFERENCES = (6, 15, 17, 10, -6, -15, -17, -10)
 FILES_AB = File.FILE_A | File.FILE_B
 FILES_GH = File.FILE_G | File.FILE_H
+
+INFINITY = inf
+MINUS_INFINITY = -INFINITY
 
 
 class PositionState:
@@ -163,6 +168,8 @@ class Position:
     def reset_state_to(self, memento: PositionState) -> None:
         for k, v in memento.__dict__.items():
             setattr(self, k, v)
+        print("MEM")
+        quit()  # TODO
 
     @property
     def occupied_squares_by_rival(self):
@@ -635,6 +642,7 @@ class Position:
                 if not is_legal_king_move:
                     print(5, "KING")  # TODO REMOVE P
                     return False
+
                 if self.is_castling(move):
                     move.is_castling = True
                 return True
@@ -974,6 +982,7 @@ class Position:
 
         return False
 
+    @staticmethod
     def is_castling(move):
         """
         Is this a possible castling move?
@@ -1624,9 +1633,9 @@ class Position:
 
     # -------------------------------------------------------------
     # NEW FUNCTIONALITY BASED ON 'any_legal_moves()'
-    # AND has_XXX_move() ROUTINES ABOVE
-    # THE FUNCTION IS TO GENERATED ALL THE AVAILABLE LEGAL PIECE MOVES
-    # THe GENERATED LIST WILL E USED BY MY MINIMAX ALGORITHM
+    # AND 'has_XXX_move()' ROUTINES ABOVE.
+    # THIS FUNCTION IS TO GENERATE ALL THE AVAILABLE LEGAL PIECE MOVES.
+    # THe GENERATED LIST WILL BE USED BY THE MINIMAX ALGORITHM
     # -------------------------------------------------------------
 
     def all_legal_moves_list(self, rival_to_move: int) -> list[tuple]:
@@ -1683,8 +1692,6 @@ class Position:
             if not move.is_illegal_move:
                 moves_list.append((king_from_square, to_square))
 
-        print("DONE K", moves_list)
-        quit()
         return moves_list
 
     def all_rook_moves(self, rival_to_move: int) -> list[tuple]:
@@ -1739,8 +1746,6 @@ class Position:
                 if not move.is_illegal_move:
                     moves_list.append((queen_from_square, to_square))
 
-        print("DONE Q", moves_list)
-        quit()
         return moves_list
 
     def filter_evaluate_move(self, piece, from_square, to_square):
@@ -1779,12 +1784,14 @@ class Position:
         moves_list = [(from_square, to_square)
                       for from_square, to_square in filtered_knight_moves
                       if ((move := self.filter_evaluate_move(knight_piece,
-                                                         from_square,
-                                                         to_square)) and
+                                                             from_square,
+                                                             to_square)) and
                           not move.is_illegal_move)]
         print("DONE N", moves_list)
-        quit()
+        #  TODO
+        return moves_list
 
+        # TODO REMOVE BELOW
         for knight_from_square, to_square in filtered_knight_moves:
             move = Move(knight_piece, (knight_from_square, to_square))
             move = evaluate_move(move, copy.deepcopy(self))
@@ -1812,15 +1819,25 @@ class Position:
         current_bishop_locations = list(self.piece_map[bishop_piece])
         bishop_squares = get_squares_from_bitboard(bishop_attacks)
 
-        for bishop_from_square in current_bishop_locations:
-            for to_square in bishop_squares:
-                move = Move(bishop_piece, (bishop_from_square, to_square))
-                move = evaluate_move(move, copy.deepcopy(self))
-                if not move.is_illegal_move:
-                    moves_list.append((bishop_from_square, to_square))
+        filtered_bishop_moves = (filter(is_viable_diagonal_move,
+                                 product(current_bishop_locations,
+                                         bishop_squares)))
+
+        moves_list = [(from_square, to_square)
+                      for from_square, to_square in filtered_bishop_moves
+                      if ((move := self.filter_evaluate_move(bishop_piece,
+                                                             from_square,
+                                                             to_square))
+                          and not move.is_illegal_move)]
+
+        # for bishop_from_square in current_bishop_locations:
+        #     for to_square in bishop_squares:
+        #         move = Move(bishop_piece, (bishop_from_square, to_square))
+        #         move = evaluate_move(move, copy.deepcopy(self))
+        #         if not move.is_illegal_move:
+        #             moves_list.append((bishop_from_square, to_square))
 
         print("DONE B", moves_list)
-        quit()
         return moves_list
 
     def all_pawn_moves(self, rival_to_move: int) -> list[tuple]:
@@ -1831,7 +1848,6 @@ class Position:
                              | self.computer_pawn_moves, Piece.bP),
         }
 
-        print("T", get_squares_from_bitboard(self.computer_pawn_moves))
         all_pawn_moves = pawn_rival_map[rival_to_move][THE_ATTACK]
         pawn_piece = pawn_rival_map[rival_to_move][THE_PIECE]
 
@@ -1854,8 +1870,8 @@ class Position:
 
         print(pawn_squares)
         # TODO
-        # print("DONE P", moves_list)
-        # quit()
+        print("DONE P", moves_list)
+        # TODO
         return moves_list
 
 
@@ -1954,3 +1970,15 @@ def is_viable_knight_move(pair: tuple[int]) -> bool:
     return ((from_square - to_square) in LEGAL_KNIGHT_DIFFERENCES and
             not ((from_square in FILES_AB and to_square in FILES_GH) or
                  from_square in FILES_GH and to_square in FILES_AB))
+
+
+def is_viable_diagonal_move(pair: tuple[int]) -> bool:
+    """
+    Used for BISHOP and QUEEN moves
+    Numbers 7 and 9 derived from the functions
+    get_southeast_ray, get_northwest_ray, get_southwest_ray, get_northeast_ray
+    in wake_rays.py
+    """
+    from_square, to_square = pair
+    difference = abs(from_square - to_square)
+    return (difference % 7 == 0) or (difference % 9 == 0)
