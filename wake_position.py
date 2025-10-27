@@ -624,28 +624,28 @@ class Position:
         if self.is_capture(move):
             move.is_capture = True
 
-        print(100)  # TODO REMOVE P
+        #  print(100)  # TODO REMOVE P
         match piece_type_number:
             case Piece.wB | Piece.bB:
-                print(1, self.is_legal_rook_move(move))  # TODO REMOVE P
+                #  print(1, self.is_legal_rook_move(move))  # TODO REMOVE P
                 return self.is_legal_bishop_move(move)
 
             case Piece.wR | Piece.bR:
-                print(2, self.is_legal_rook_move(move))  # TODO REMOVE P
+                #  print(2, self.is_legal_rook_move(move))  # TODO REMOVE P
                 return self.is_legal_rook_move(move)
 
             case Piece.wN | Piece.bN:
-                print(3, self.is_legal_knight_move(move))  # TODO REMOVE P
+                #  print(3, self.is_legal_knight_move(move))  # TODO REMOVE P
                 return self.is_legal_knight_move(move)
 
             case Piece.wQ | Piece.bQ:
-                print(4, self.is_legal_queen_move(move))  # TODO REMOVE P
+                #  print(4, self.is_legal_queen_move(move))  # TODO REMOVE P
                 return self.is_legal_queen_move(move)
 
             case Piece.wK | Piece.bK:
                 is_legal_king_move = self.is_legal_king_move(move)
                 if not is_legal_king_move:
-                    print(5, "KING")  # TODO REMOVE P
+                    #  print(5, "KING")  # TODO REMOVE P
                     return False
 
                 if self.is_castling(move):
@@ -1398,6 +1398,7 @@ class Position:
         if rival_to_move == Rival.COMPUTER:
             self.computer_king_attacks |= king_moves
 
+    @staticmethod
     def add_castling_moves(
         bitboard: np.uint64, can_castle: list, rival_to_move
     ) -> np.uint64:
@@ -1491,7 +1492,7 @@ class Position:
         else:
             self.king_in_check[Rival.COMPUTER] = False
         #  TODO
-        print(self.king_in_check)  # TODO REMOVE P K
+        #  print(self.king_in_check)  # TODO REMOVE P K
 
     def make_move_result(self) -> MoveResult:
         move_result = MoveResult()
@@ -1736,9 +1737,7 @@ class Position:
                                                   to_square,
                                                   rook_piece)]
 
-        print(current_rook_locations)
-        print(rook_attack_squares)
-        print("DONE R", moves_list)
+        #  print("DONE R", moves_list) TODO REMOVE P
         return moves_list
 
     def all_queen_moves(self, rival_to_move: int) -> list[tuple]:
@@ -1790,11 +1789,7 @@ class Position:
         current_knight_locations = list(self.piece_map[knight_piece])
         knight_squares = get_squares_from_bitboard(knight_attacks)
 
-        #  current_knight_locations = []
-        #  print(list(product(current_knight_locations, knight_squares)))
-        #  quit()  #  TODO
-
-        print("KS", knight_squares)  # TODO REMOVE P
+        #  print("KS", knight_squares)  # TODO REMOVE P
         filtered_knight_moves = (filter(is_viable_knight_move,
                                  product(current_knight_locations,
                                          knight_squares)))
@@ -1806,7 +1801,7 @@ class Position:
                                                              to_square)) and
                           not move.is_illegal_move)]
 
-        print("DONE N", moves_list)
+        #  print("DONE N", moves_list) TODO REMOVE P
         #  TODO
         return moves_list
 
@@ -1837,7 +1832,7 @@ class Position:
                                                              to_square))
                           and not move.is_illegal_move)]
 
-        print("DONE B", moves_list)
+        #  print("DONE B", moves_list) TODO REMOVE P
         return moves_list
 
     def all_pawn_moves(self, rival_to_move: int) -> list[tuple]:
@@ -1868,10 +1863,10 @@ class Position:
                 if not move.is_illegal_move:
                     moves_list.append((pawn_from_square, to_square))
 
-        print(pawn_squares)
-        # TODO
-        print("DONE P", moves_list)
-        # TODO
+        #  print(pawn_squares) TODO REMOVE P
+        #  TODO
+        #  print("DONE P", moves_list)
+        #  TODO
         return moves_list
 
 
@@ -1881,7 +1876,7 @@ def evaluate_move(move, position: Position) -> MoveResult:
     """
 
     if not position.is_legal_move(move):
-        print(position.king_in_check)  # TODO REMOVE P
+        #  print(position.king_in_check)  # TODO REMOVE P
         return position.make_illegal_move_result()
 
     if move.is_capture:
@@ -1926,7 +1921,7 @@ def evaluate_move(move, position: Position) -> MoveResult:
     position.evaluate_king_check()
 
     if position.king_in_check[position.rival_to_move]:
-        print("RIVALTOMOVE", position.rival_to_move)  # TODO REMOVE P
+        #  print("RIVALTOMOVE", position.rival_to_move)  # TODO REMOVE P
         return position.make_illegal_move_result()
 
     return position.make_move_result()
