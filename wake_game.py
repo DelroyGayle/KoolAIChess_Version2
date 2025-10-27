@@ -5,6 +5,7 @@ from os import system, name
 
 from wake_constants import Rival
 from wake_position import Position
+from make_copy import makecopy
 
 CURRENT_VERSION = "2.0.0"
 # VERSION 1.0.0 is at https://github.com/DelroyGayle/KoolAIChess
@@ -31,3 +32,9 @@ class WakeGame:
             Rival.PLAYER: "Player",
             Rival.COMPUTER: "Computer",
         }
+
+    def clone(self):
+        newclone = WakeGame()
+        for key, value in vars(self).items():
+            setattr(newclone, key, makecopy(value))
+        return newclone
