@@ -594,8 +594,11 @@ def minimax(chess: Game, wake_game: WakeGame,
                                  not is_maximising,
                                  alpha,
                                  beta)
-        scores.append(current_score,
-                      from_square, to_square)
+        if level == 1:
+            scores.append((current_score,
+                          (from_square, to_square)))
+        else:
+            scores.append(current_score)
 
         if is_maximising:
             alpha = max(alpha, current_score)

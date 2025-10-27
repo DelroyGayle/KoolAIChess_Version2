@@ -12,14 +12,15 @@ from wake_constants import (
     Piece,
     Square,
     CastleRoute,
+    File,
     Rank,
+    SQUARE_MAP,
     PLAYER_PROMOTION_MAP,
     COMPUTER_PROMOTION_MAP,
     KINGSIDE,
     QUEENSIDE,
     THE_ATTACK,
     THE_PIECE,
-    File
 )
 
 from wake_core import (
@@ -49,7 +50,11 @@ from wake_move import Move, MoveResult
 from wake_debug import pprint_pieces  # TODO
 
 ROOK_RIVAL_MAP = {Rival.PLAYER: Piece.wR, Rival.COMPUTER: Piece.bR}
+
+# These numbers are derived from
+# generate_knight_attack_bb_from_square()
 LEGAL_KNIGHT_DIFFERENCES = (6, 15, 17, 10, -6, -15, -17, -10)
+
 FILES_AB = File.FILE_A | File.FILE_B
 FILES_GH = File.FILE_G | File.FILE_H
 
@@ -1694,6 +1699,20 @@ class Position:
 
         return moves_list
 
+    def is_viable_rook_move(self,
+                            from_square,
+                            to_square,
+                            rook_piece):
+        pair = (from_square, to_square)
+        if not (is_viable_vertical_move(pair) or
+                is_viable_horizontal_move(pair)):
+            return False
+
+        move = self.filter_evaluate_move(rook_piece,
+                                         from_square,
+                                         to_square)
+        return not move.is_illegal_move
+
     def all_rook_moves(self, rival_to_move: int) -> list[tuple]:
         rook_rival_map = {
             Rival.PLAYER: (self.player_rook_attacks, Piece.wR),
@@ -1707,19 +1726,19 @@ class Position:
         if not rook_attacks.any():
             return []
 
-        moves_list = []
         current_rook_locations = self.piece_map[rook_piece]
         rook_attack_squares = get_squares_from_bitboard(rook_attacks)
 
-        for rook_from_square in list(current_rook_locations):
-            for to_square in rook_attack_squares:
-                move = Move(rook_piece, (rook_from_square, to_square))
-                move = evaluate_move(move, copy.deepcopy(self))
-                if not move.is_illegal_move:
-                    moves_list.append((rook_from_square, to_square))
+        moves_list = [(from_square, to_square)
+                      for from_square in current_rook_locations
+                      for to_square in rook_attack_squares
+                      if self.is_viable_rook_move(from_square,
+                                                  to_square,
+                                                  rook_piece)]
 
+        print(current_rook_locations)
+        print(rook_attack_squares)
         print("DONE R", moves_list)
-        quit()
         return moves_list
 
     def all_queen_moves(self, rival_to_move: int) -> list[tuple]:
@@ -1759,7 +1778,6 @@ class Position:
             Rival.COMPUTER: (self.computer_knight_attacks, Piece.bN),
         }
 
-        moves_list = []
         knight_attacks = knight_rival_map[rival_to_move][THE_ATTACK]
         knight_piece = knight_rival_map[rival_to_move][THE_PIECE]
 
@@ -1787,19 +1805,9 @@ class Position:
                                                              from_square,
                                                              to_square)) and
                           not move.is_illegal_move)]
+
         print("DONE N", moves_list)
         #  TODO
-        return moves_list
-
-        # TODO REMOVE BELOW
-        for knight_from_square, to_square in filtered_knight_moves:
-            move = Move(knight_piece, (knight_from_square, to_square))
-            move = evaluate_move(move, copy.deepcopy(self))
-            if not move.is_illegal_move:
-                moves_list.append((knight_from_square, to_square))
-        print("DONE N", moves_list)
-        quit()
-
         return moves_list
 
     def all_bishop_moves(self, rival_to_move: int) -> list[tuple]:
@@ -1808,7 +1816,6 @@ class Position:
             Rival.COMPUTER: (self.computer_bishop_attacks, Piece.bB),
         }
 
-        moves_list = []
         bishop_attacks = bishop_rival_map[rival_to_move][THE_ATTACK]
         bishop_piece = bishop_rival_map[rival_to_move][THE_PIECE]
 
@@ -1829,13 +1836,6 @@ class Position:
                                                              from_square,
                                                              to_square))
                           and not move.is_illegal_move)]
-
-        # for bishop_from_square in current_bishop_locations:
-        #     for to_square in bishop_squares:
-        #         move = Move(bishop_piece, (bishop_from_square, to_square))
-        #         move = evaluate_move(move, copy.deepcopy(self))
-        #         if not move.is_illegal_move:
-        #             moves_list.append((bishop_from_square, to_square))
 
         print("DONE B", moves_list)
         return moves_list
@@ -1982,3 +1982,21 @@ def is_viable_diagonal_move(pair: tuple[int]) -> bool:
     from_square, to_square = pair
     difference = abs(from_square - to_square)
     return (difference % 7 == 0) or (difference % 9 == 0)
+
+
+def is_viable_vertical_move(pair: tuple[int]) -> bool:
+    """
+    Used for ROOK and QUEEN moves
+    Vertical move: Are the files identical?
+    """
+    from_square, to_square = pair
+    return SQUARE_MAP[from_square][0] == SQUARE_MAP[to_square][0]
+
+
+def is_viable_horizontal_move(pair: tuple[int]) -> bool:
+    """
+    Used for ROOK and QUEEN moves
+    Horizontal move: Are the ranks identical?
+    """
+    from_square, to_square = pair
+    return SQUARE_MAP[from_square][1] == SQUARE_MAP[to_square][1]
