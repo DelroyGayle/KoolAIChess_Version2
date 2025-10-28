@@ -4,6 +4,8 @@ import numpy as np
 from math import inf
 from itertools import product
 from typing import Optional, NoReturn
+from copy import deepcopy
+
 
 from extras import CustomException
 
@@ -175,6 +177,37 @@ class Position:
             setattr(self, k, v)
         print("MEM")
         quit()  # TODO
+
+#  TODO
+
+    def __copy__(self):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.__dict__.update(self.__dict__)
+        return result
+    
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.__dict__.update(self.__dict__)
+
+        # piece_map is a Dictionary of Sets
+        result.piece_map = {}
+        for key, value in self.piece_map.items():
+            result.piece_map[key] = set(value)
+
+        result.castle_rights = {Rival.PLAYER: list(self.castle_rights[Rival.PLAYER]),
+                                Rival.COMPUTER: list(self.castle_rights[Rival.COMPUTER])}
+        # EG {0: [True, True], 1: [True, True]}
+
+        result.mailbox = self.mailbox[:] # list
+        result.king_in_check = self.king_in_check[:] # list
+        result.position_history = self.position_history[:] # list
+
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
 
     @property
     def occupied_squares_by_rival(self):
@@ -624,7 +657,7 @@ class Position:
         if self.is_capture(move):
             move.is_capture = True
 
-        #  print(100)  # TODO REMOVE P
+        #  print(627)  # TODO REMOVE P
         match piece_type_number:
             case Piece.wB | Piece.bB:
                 #  print(1, self.is_legal_rook_move(move))  # TODO REMOVE P
@@ -1635,6 +1668,7 @@ class Position:
         """
         if 0 <= from_square < 64:
             return self.mailbox[from_square]
+
         return None
 
     # -------------------------------------------------------------
@@ -1782,7 +1816,7 @@ class Position:
 
         # if no attacks, return []
         if not knight_attacks.any():
-            print("WHYN")
+            print("WHYN") # TODO P
             quit()
             return []
 
@@ -1848,7 +1882,7 @@ class Position:
 
         # if no moves, return []
         if not all_pawn_moves.any():
-            print("WHYP")
+            print("WHYP") # TODO P
             quit()
             return []
 

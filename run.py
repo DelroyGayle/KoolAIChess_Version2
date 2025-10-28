@@ -13,6 +13,8 @@ Menezes' QBASIC program can be found at
 
 from typing import Optional, NoReturn
 import copy  # TODO RE copy/deepcopy
+import pickle
+import _pickle as cPickle
 
 import constants
 import piece
@@ -278,6 +280,10 @@ def create_wake_move(wake_game: WakeGame,
     move_piece_typenum = (
         wake_game.position.get_piece_typenum_on_square(from_square))
     if move_piece_typenum is None:
+        print(from_square_str, to_square_str) #  TODO
+        print(from_square, to_square)
+        pprint_pieces(wake_game.position.piece_map)  # TODO
+        quit()
         raise CustomException("Internal Error: Unexpected blank piece")
 
     newmove = Move(move_piece_typenum, squares=(from_square, to_square))
@@ -454,6 +460,46 @@ def evaluate(chess, level, piece_sign, prune_factor):
     return bestscore  # Done!
 
 
+def copy_game_object(wake_game :WakeGame) -> WakeGame:
+    #  TODO CLEANUP CODE
+    # game_copy = wake_game.clone()
+
+    game_copy = copy.deepcopy(wake_game)
+    #game_copy = cPickle.loads(cPickle.dumps(wake_game))
+    # print(type(game_copy))
+    return game_copy
+
+    new_position = Position()
+
+    for attribute in vars(wake_game.position):
+        if attribute == 'board':
+            new_position.board = copy.deepcopy(wake_game.position.board)
+
+        elif attribute == 'piece_map':
+            # Custom Dictionary Copy
+            # The value for each key is a set
+            #new_position.piece_map = copy.deepcopy(wake_game.position.piece_map)    # TODO
+            new_position.piece_map = {}
+            for key, value in wake_game.position.piece_map.items():
+                new_position.piece_map[key] = set(value)
+
+        elif attribute in {
+                         'mailbox',
+                         'castle_rights',
+                         'king_in_check',
+                         'position_in_history', }:
+            setattr(new_position, attribute,
+                    makecopy(getattr(wake_game.position, attribute)))
+
+        else:
+
+            setattr(new_position, attribute,
+                    getattr(wake_game.position, attribute))
+            
+    game_copy.position = new_position
+    return game_copy
+
+
 def minimax_root(chess: Game, wake_game: WakeGame,
                  piece_sign: int) -> int:   # TODO remove piece_sign
     """ TODO - ADD COMMENTS """
@@ -477,6 +523,7 @@ def minimax_root(chess: Game, wake_game: WakeGame,
                      alpha=MINUS_INFINITY,
                      beta=INFINITY)
 
+    #  TODO
     # Generate all the possible legal moves for the computer
     # moves_list = wake_game.position.all_legal_moves_list(Rival.COMPUTER)
     print(moves_list)
@@ -486,6 +533,7 @@ def minimax_root(chess: Game, wake_game: WakeGame,
     print(best_score)
     quit()
 
+    # TODO CLEANUP CODE
     # Determine the scores for each possible move
     scores = []
     # for move in moves_list:
@@ -495,7 +543,7 @@ def minimax_root(chess: Game, wake_game: WakeGame,
     #                           is_maximising=True,
     #                           alpha=MINUS_INFINITY,
     #                           beta=INFINITY))
-    print(max(scores), "M")
+    print(max(scores), "M") #  TODO
     quit()
 
     # TODO
@@ -565,46 +613,25 @@ def minimax(chess: Game, wake_game: WakeGame,
             (to_file_number, to_rank_number) = coords_formula(to_file,
                                                               to_rank)
 
+            # print(valid_moves) # TODO P
+            # print(from_file, from_rank,
+            #       to_file, to_rank)
             # Convert the move into the WakeEngine format
+            # print(617)  #  TODO P
             wake_move = create_wake_move(wake_game,
                                          from_file, from_rank,
                                          to_file, to_rank)
 
+            # Make a deep copy of the game and its current position
+            game_copy = copy_game_object(wake_game)
+
             # Make the move so that it can be evaluated
-            # game_copy = copy.deepcopy(wake_game)
-            game_copy = wake_game.clone()
-
-            new_position = Position()
-            for i in vars(wake_game.position):
-                if i in {'board',
-                         'piece_map',
-                         'mailbox',
-                         'castle_rights',
-                         'king_in_check',
-                         'position_in_history', }:
-                    setattr(new_position, i,
-                            makecopy(getattr(wake_game.position, i)))
-                else:
-                    setattr(new_position, i, getattr(wake_game.position, i))
-
-            # for i in vars(wake_game.position):
-            #     print(i)
-            # print("COPY")
-            # for i in vars(new_position):
-            #     print(i)
-
-            game_copy.position = new_position
-
-            # print(type(wake_game), wake_game)
-            # print(type(game_copy), game_copy)
-            # print(type(wake_game.position), wake_game.position)
-            # print(type(game_copy.position), game_copy.position)
-
             move_result = game_copy.position.wake_makemove(wake_move)
 
             if move_result.is_illegal_move:
                 continue
 
+                # TODO REMOVE
                 print(from_square, to_square, wake_move, 1)
                 pprint_pieces(game_copy.position.piece_map)
                 # this should never happen because
@@ -634,8 +661,9 @@ def minimax(chess: Game, wake_game: WakeGame,
             other_rival = (Rival.COMPUTER if rival == Rival.PLAYER
                            else Rival.PLAYER)
             next_moves = wake_game.position.all_legal_moves_list(other_rival)
+
             if not next_moves:
-                print("MAX FAILED", next_moves)
+                print("MAX FAILED", next_moves)  # TODO P
                 return INFINITY if is_maximising else MINUS_INFINITY
 
             the_score += minimax(chess,
@@ -677,17 +705,20 @@ def minimax(chess: Game, wake_game: WakeGame,
             (to_file_number, to_rank_number) = coords_formula(to_file,
                                                               to_rank)
 
+            # 704, valid_moves)  #  TODO P
             # Convert the move into the WakeEngine format
             wake_move = create_wake_move(wake_game,
                                          from_file, from_rank,
                                          to_file, to_rank)
 
+            # Make a deep copy of the game and its current position
+            game_copy = copy_game_object(wake_game)
+
             # Make the move so that it can be evaluated
-            game_copy = copy.deepcopy(wake_game)
             move_result = game_copy.position.wake_makemove(wake_move)
 
             if move_result.is_illegal_move:
-                continue  # TODO
+                continue  # TODO REMOVE BELOW
 
                 # this should never happen because
                 # only legal moves ought to have been
@@ -723,7 +754,7 @@ def minimax(chess: Game, wake_game: WakeGame,
                            else Rival.PLAYER)
             next_moves = wake_game.position.all_legal_moves_list(other_rival)
             if not next_moves:
-                print("MIN FAILED", next_moves)
+                print("MIN FAILED", next_moves)    # TODO P
                 return INFINITY if is_maximising else MINUS_INFINITY
 
             the_score += minimax(chess,
@@ -766,6 +797,7 @@ def minimax_root1(chess: Game, wake_game: WakeGame,
 
     # Generate all the possible legal moves for the computer
     moves_list = wake_game.position.all_legal_moves_list(Rival.COMPUTER)
+    # TODO P
     print(moves_list)
     assert moves_list  # TODO DEFENSIVE GUARD
     print("RESULT", result)
@@ -780,7 +812,7 @@ def minimax_root1(chess: Game, wake_game: WakeGame,
     #                           is_maximising=True,
     #                           alpha=MINUS_INFINITY,
     #                           beta=INFINITY))
-    print(max(scores), "M")
+    print(max(scores), "M") # TODO P REMOVE BELOW
     quit()
 
     # TODO
@@ -848,6 +880,7 @@ def minimax1(chess: Game, wake_game: WakeGame,
         (to_file_number, to_rank_number) = coords_formula(to_file,
                                                           to_rank)
 
+        print(879)  #  TODO P
         # Convert the move into the WakeEngine format
         wake_move = create_wake_move(wake_game,
                                      from_file, from_rank,
@@ -1184,6 +1217,7 @@ def player_move_validation_loop(chess: Game, wake_game: WakeGame,
             e.is_error_from_input_file()
             continue
 
+        print(1216)  #  TODO P
         # Convert the move into the WakeEngine format
         wake_move = create_wake_move(wake_game,
                                      from_file, from_rank,

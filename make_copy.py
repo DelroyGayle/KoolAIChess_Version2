@@ -1,8 +1,5 @@
 def makecopy(original):
 
-    # if isinstance(original, Position):
-    #     return original.clone()
-
     if not isinstance(original, (dict, list, set)):
         return original  # i.e. immutable item
 
@@ -10,7 +7,7 @@ def makecopy(original):
         return set(original)
 
     if isinstance(original, dict):
-        return dict(original)
+        return dict.copy(original)
 
     # Handle list of lists
     # Make a deep copy of the list
