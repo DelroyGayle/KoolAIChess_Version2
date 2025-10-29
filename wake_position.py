@@ -7,7 +7,6 @@ from typing import Optional, NoReturn, Literal
 from copy import deepcopy
 from time import sleep  # todo REMOVE
 
-
 from extras import CustomException
 
 from wake_constants import (
@@ -48,6 +47,7 @@ from wake_rays import (
 
 from wake_attacks import generate_king_attack_bb_from_square
 from wake_board import WakeBoard
+# from wake_position import Position  # TODO
 from wake_fen import generate_fen
 from wake_move import Move, MoveResult
 from wake_debug import pprint_pieces  # TODO
@@ -247,93 +247,17 @@ class Position:
 
     # TODO
     def wake_makemove(self,
-                      move: Move,
-                      original: dict) -> MoveResult:
+                      move: Move) -> tuple[MoveResult, dict]:
         # if self.rival_to_move != move.rival_identity:  # TODO
         #     return self.make_illegal_move_result()
 
-        # original_position = copy.deepcopy(self.__dict__) TODO
+        # TODO REMOVE
         original_position = copy.deepcopy(self)
 
-        legal, original = self.is_legal_move(move, original)
-        if not legal:
-            return self.make_illegal_move_result(), original
-
-        if move.is_capture:
-            original['halfmove_clock'] = self.halfmove_clock
-            self.halfmove_clock = 0
-            original = (
-                self.remove_opponent_piece_from_square(move.to_square,
-                                                       original))
-
-        if self.is_en_passant_capture:
-            if move.rival_identity == Rival.PLAYER:
-                original = (
-                    self.remove_opponent_piece_from_square(move.to_square - 8,
-                                                           original)
-                )
-            if move.rival_identity == Rival.COMPUTER:
-                original = (
-                    self.remove_opponent_piece_from_square(move.to_square + 8,
-                                                           original)
-                )
-
-        original['is_en_passant_capture'] = self.is_en_passant_capture
-        self.is_en_passant_capture = False
-
-        if move.piece_type_number in {Piece.wP, Piece.bP}:
-            if 'halfmove_clock' not in original:
-                original['halfmove_clock'] = self.halfmove_clock
-            self.halfmove_clock = 0
-
-        # update both piece_map and mailbox
-        map_key = f'piece_map {move.piece_type_number}'
-        assert (map_key not in original)
-        original[map_key] = set(self.piece_map[move.piece_type_number])
-        from_key = f'mailbox {move.from_square}'
-        assert (from_key not in original)
-        original[from_key] = self.mailbox[move.from_square]
-        to_key = f'mailbox {move.to_square}'
-        assert (to_key not in original)
-        original[to_key] = self.mailbox[move.to_square]
-
-        self.piece_map[move.piece_type_number].remove(move.from_square)
-        self.piece_map[move.piece_type_number].add(move.to_square)
-        self.mailbox[move.from_square] = None
-        self.mailbox[move.to_square] = move.piece_type_number
-
-        # TODO Update Game
-
-        if move.is_promotion:
-            self.promote_pawn(move)
-
-        if move.is_castling:
-            original = self.move_rooks_for_castling(move,
-                                                    original)
-
-        if 'halfmove_clock' not in original:
-            original['halfmove_clock'] = self.halfmove_clock
-        original['halfmove'] = self.halfmove
-
-        self.halfmove_clock += 1
-        self.halfmove += 1
-
-        castle_rights = self.castle_rights[move.rival_identity]
-
-        if any(castle_rights):
-            original = self.adjust_castling_rights(move, original)
-
-        if self.en_passant_side != move.rival_identity:
-            if 'en_passant_target' not in original:
-                original['en_passant_target'] = self.en_passant_target
-
-            self.en_passant_target = None
-
-        original = self.board.update_position_bitboards(self.piece_map,
-                                                        original)
-        original = self.update_attack_bitboards(original)
-
-        self.evaluate_king_check()
+        move_result, original = update_position_and_move(self, move)
+        if move_result is not None:
+            # a move error occurred
+            return move_result, original
 
         if self.king_in_check[move.rival_identity]:
             print("RESET")  # TODO
@@ -574,7 +498,10 @@ class Position:
         return False
 
     def remove_opponent_piece_from_square(self, to_square: int,
-                                          original: dict = {}) -> dict:
+                                          original: dict = None) -> dict:
+        if original is None:
+            original = {}
+
         target = self.mailbox[to_square]
         if target is not None:
             # target is a number
@@ -589,7 +516,9 @@ class Position:
             self.mailbox[to_square] = None
         return original
 
-    def update_attack_bitboards(self, original: dict = {}) -> dict:
+    def update_attack_bitboards(self, original: dict = None) -> dict:
+        if original is None:
+            original = {}
         original = self.reset_attack_bitboards(original)
 
         for piece, squares in self.piece_map.items():
@@ -648,7 +577,9 @@ class Position:
         return original
 
     def adjust_castling_rights(self, move: Move,
-                               original: dict = {}) -> dict:
+                               original: dict = None) -> dict:
+        if original is None:
+            original = {}
 
         if move.piece_type_number in {Piece.wK, Piece.bK, Piece.wR, Piece.bR}:
             original['castling_rights'] = list(self.castle_rights)
@@ -678,7 +609,9 @@ class Position:
         return original
 
     def move_rooks_for_castling(self, move: Move,
-                                original: dict = {}) -> dict:
+                                original: dict = None) -> dict:
+        if original is None:
+            original = {}
 
         square_map = {
             Square.G1: (Square.H1, Square.F1),
@@ -709,7 +642,10 @@ class Position:
 
         return original
 
-    def reset_attack_bitboards(self, original: dict = {}) -> dict:
+    def reset_attack_bitboards(self, original: dict = None) -> dict:
+        if original is None:
+            original = {}
+
         original['player_rook_attacks'] = self.player_rook_attacks
         original['computer_rook_attacks'] = self.computer_rook_attacks
         original['player_bishop_attacks'] = self.player_bishop_attacks
@@ -2012,61 +1948,115 @@ class Position:
         #  TODO
         return moves_list
 
-
-def evaluate_move(move: Move,
-                  position: Position) -> MoveResult:
+def update_position_and_move(position: Position,
+                             move: Move
+) -> tuple[Optional[MoveResult], dict]:
     """
-    Evaluates if a move is fully legal
+    By maintaining a dictionary ('original')
+    of any changes made to the Position object,
+    if any move error occurs, then any changes
+    can be reverted in a lot faster way then 'deepcopy'
     """
-    original = {}  # TODO
 
-    if not position.is_legal_move(move):
-        #  print(position.king_in_check)  # TODO REMOVE P
-        return position.make_illegal_move_result()
+    # empty dictionary of 'changes' to begin with
+    original = {}
+    legal, original = position.is_legal_move(move)
+    if not legal:
+        return position.make_illegal_move_result(), original
 
     if move.is_capture:
+        original['halfmove_clock'] = position.halfmove_clock
         position.halfmove_clock = 0
-        position.remove_opponent_piece_from_square(move.to_square)
+        original = (
+            position.remove_opponent_piece_from_square(move.to_square,
+                                                    original))
 
     if position.is_en_passant_capture:
-        if position.rival_to_move == Rival.PLAYER:
-            position.remove_opponent_piece_from_square(move.to_square - 8)
-        if position.rival_to_move == Rival.COMPUTER:
-            position.remove_opponent_piece_from_square(move.to_square + 8)
+        if move.rival_identity == Rival.PLAYER:
+            original = (
+                position.remove_opponent_piece_from_square(move.to_square - 8,
+                                                        original)
+            )
+        if move.rival_identity == Rival.COMPUTER:
+            original = (
+                position.remove_opponent_piece_from_square(move.to_square + 8,
+                                                        original)
+            )
 
+    original['is_en_passant_capture'] = position.is_en_passant_capture
     position.is_en_passant_capture = False
 
     if move.piece_type_number in {Piece.wP, Piece.bP}:
+        if 'halfmove_clock' not in original:
+            original['halfmove_clock'] = position.halfmove_clock
         position.halfmove_clock = 0
+
     # update both piece_map and mailbox
+    map_key = f'piece_map {move.piece_type_number}'
+    assert (map_key not in original)
+    original[map_key] = set(position.piece_map[move.piece_type_number])
+    from_key = f'mailbox {move.from_square}'
+    assert (from_key not in original)
+    original[from_key] = position.mailbox[move.from_square]
+    to_key = f'mailbox {move.to_square}'
+    print
+    assert (to_key not in original)
+    original[to_key] = position.mailbox[move.to_square]
+
     position.piece_map[move.piece_type_number].remove(move.from_square)
     position.piece_map[move.piece_type_number].add(move.to_square)
     position.mailbox[move.from_square] = None
     position.mailbox[move.to_square] = move.piece_type_number
 
+    # TODO Update Game
+
     if move.is_promotion:
         position.promote_pawn(move)
 
     if move.is_castling:
-        position.move_rooks_for_castling(move)
+        original = position.move_rooks_for_castling(move,
+                                                original)
+
+    if 'halfmove_clock' not in original:
+        original['halfmove_clock'] = position.halfmove_clock
+    original['halfmove'] = position.halfmove
 
     position.halfmove_clock += 1
     position.halfmove += 1
 
-    castle_rights = position.castle_rights[position.rival_to_move]
+    castle_rights = position.castle_rights[move.rival_identity]
 
     if any(castle_rights):
-        position.adjust_castling_rights(move)
+        original = position.adjust_castling_rights(move, original)
 
-    if position.en_passant_side != position.rival_to_move:
+    if position.en_passant_side != move.rival_identity:
+        if 'en_passant_target' not in original:
+            original['en_passant_target'] = position.en_passant_target
+
         position.en_passant_target = None
 
-    position.board.update_position_bitboards(position.piece_map)
-    position.update_attack_bitboards()
+    original = position.board.update_position_bitboards(position.piece_map,
+                                                    original)
+    original = position.update_attack_bitboards(original)
+
     position.evaluate_king_check()
 
+    return None, original
+        
+def evaluate_move(move: Move,
+                  position: Position) -> MoveResult:
+    """
+    Evaluates if a move is fully legal
+    """
+
+    move_result, _ = update_position_and_move(position, move)
+    if move_result is not None:
+        # a move error occurred
+        return move_result
+
     if position.king_in_check[position.rival_to_move]:
-        #  print("RIVALTOMOVE", position.rival_to_move)  # TODO REMOVE P
+        print("RIVALTOMOVE", position.rival_to_move)  # TODO REMOVE P
+        quit()
         return position.make_illegal_move_result()
 
     return position.make_move_result()

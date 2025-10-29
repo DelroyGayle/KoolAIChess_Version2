@@ -13,8 +13,6 @@ Menezes' QBASIC program can be found at
 
 from typing import Optional, NoReturn
 import copy  # TODO RE copy/deepcopy
-import pickle
-import _pickle as cPickle
 
 import constants
 import piece
@@ -625,8 +623,7 @@ def minimax(chess: Game, wake_game: WakeGame,
             game_copy = copy_game_object(wake_game)
 
             # Make the move so that it can be evaluated
-            move_result, original = game_copy.position.wake_makemove(wake_move,
-                                                                     {})
+            move_result, original = game_copy.position.wake_makemove(wake_move)
             print("MAX DONE")  # TODO P
             print(original)
             if move_result.is_illegal_move:
@@ -716,8 +713,7 @@ def minimax(chess: Game, wake_game: WakeGame,
             game_copy = copy_game_object(wake_game)
 
             # Make the move so that it can be evaluated
-            move_result, original = game_copy.position.wake_makemove(wake_move,
-                                                                     {})
+            move_result, original = game_copy.position.wake_makemove(wake_move)
 
             if move_result.is_illegal_move:
                 continue  # TODO REMOVE BELOW
@@ -1227,7 +1223,7 @@ def player_move_validation_loop(chess: Game, wake_game: WakeGame,
 
         # Check legality of Player's move
         # If legal, the move is played
-        move_result, original = wake_game.position.wake_makemove(wake_move, {})
+        move_result, original = wake_game.position.wake_makemove(wake_move)
 
         if move_result.is_king_in_check:
             chess.display(print_string)
