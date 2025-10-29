@@ -159,42 +159,49 @@ class WakeBoard:
     #  BOARD UPDATES
     # -------------------------------------------------------------
 
-    def update_position_bitboards(self, piece_map):
+    def update_position_bitboards(self, piece_map: dict,
+                                  original: dict = {}) -> dict:
         for key, val in piece_map.items():
 
             match key:
                 # PLAYER (White) Pieces
                 case Piece.wP:
+                    original['player_P_bb'] = self.player_P_bb
                     self.player_P_bb = np.uint64(0)
                     for bit in val:
                         self.player_P_bb |= (
                             set_bit(self.player_P_bb, np.uint64(bit)))
 
                 case Piece.wR:
+                    original['player_R_bb'] = self.player_R_bb
                     self.player_R_bb = np.uint64(0)
                     for bit in val:
                         self.player_R_bb |= (
                             set_bit(self.player_R_bb, np.uint64(bit)))
 
                 case Piece.wN:
+                    original['player_N_bb'] = self.player_N_bb
                     self.player_N_bb = np.uint64(0)
                     for bit in val:
                         self.player_N_bb |= (
                             set_bit(self.player_N_bb, np.uint64(bit)))
 
                 case Piece.wB:
+                    original['player_B_bb'] = self.player_B_bb
                     self.player_B_bb = np.uint64(0)
                     for bit in val:
                         self.player_B_bb |= (
                             set_bit(self.player_B_bb, np.uint64(bit)))
 
                 case Piece.wQ:
+                    original['player_Q_bb'] = self.player_Q_bb
                     self.player_Q_bb = np.uint64(0)
                     for bit in val:
                         self.player_Q_bb |= (
                             set_bit(self.player_Q_bb, np.uint64(bit)))
 
                 case Piece.wK:
+                    original['player_K_bb'] = self.player_K_bb
                     self.player_K_bb = np.uint64(0)
                     for bit in val:
                         self.player_K_bb |= (
@@ -202,36 +209,42 @@ class WakeBoard:
 
                 # COMPUTER (Black) Pieces
                 case Piece.bP:
+                    original['computer_P_bb'] = self.computer_P_bb
                     self.computer_P_bb = np.uint64(0)
                     for bit in val:
                         self.computer_P_bb |= (
                             set_bit(self.computer_P_bb, np.uint64(bit)))
 
                 case Piece.bR:
+                    original['computer_R_bb'] = self.computer_R_bb
                     self.computer_R_bb = np.uint64(0)
                     for bit in val:
                         self.computer_R_bb |= (
                             set_bit(self.computer_R_bb, np.uint64(bit)))
 
                 case Piece.bN:
+                    original['computer_N_bb'] = self.computer_N_bb
                     self.computer_N_bb = np.uint64(0)
                     for bit in val:
                         self.computer_N_bb |= (
                             set_bit(self.computer_N_bb, np.uint64(bit)))
 
                 case Piece.bB:
+                    original['computer_B_bb'] = self.computer_B_bb
                     self.computer_B_bb = np.uint64(0)
                     for bit in val:
                         self.computer_B_bb |= (
                             set_bit(self.computer_B_bb, np.uint64(bit)))
 
                 case Piece.bQ:
+                    original['computer_Q_bb'] = self.computer_Q_bb
                     self.computer_Q_bb = np.uint64(0)
                     for bit in val:
                         self.computer_Q_bb |= (
                             set_bit(self.computer_Q_bb, np.uint64(bit)))
 
                 case Piece.bK:
+                    original['computer_K_bb'] = self.computer_K_bb
                     self.computer_K_bb = np.uint64(0)
                     for bit in val:
                         self.computer_K_bb |= (
@@ -241,6 +254,8 @@ class WakeBoard:
                 case _:
                     raise CustomException("Internal Error: Unknown Piece Type "
                                           f"{str(key)}")
+
+        return original
 
     # -------------------------------------------------------------
     #  SLIDING PIECE MOVEMENT
@@ -283,8 +298,8 @@ class WakeBoard:
     def get_king_attack_from(self, square):
         return self.king_attack_bbs[square]
 
-#  TODO
-   
+#  TODO REMOVE
+
     def __copy__(self):
         cls = self.__class__
         result = cls.__new__(cls)
@@ -298,5 +313,3 @@ class WakeBoard:
         for k, v in self.__dict__.items():
             setattr(result, k, deepcopy(v, memo))
         return result
-            
-

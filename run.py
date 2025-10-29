@@ -280,7 +280,7 @@ def create_wake_move(wake_game: WakeGame,
     move_piece_typenum = (
         wake_game.position.get_piece_typenum_on_square(from_square))
     if move_piece_typenum is None:
-        print(from_square_str, to_square_str) #  TODO
+        print(from_square_str, to_square_str)  # TODO
         print(from_square, to_square)
         pprint_pieces(wake_game.position.piece_map)  # TODO
         quit()
@@ -460,13 +460,11 @@ def evaluate(chess, level, piece_sign, prune_factor):
     return bestscore  # Done!
 
 
-def copy_game_object(wake_game :WakeGame) -> WakeGame:
+def copy_game_object(wake_game: WakeGame) -> WakeGame:
     #  TODO CLEANUP CODE
     # game_copy = wake_game.clone()
 
     game_copy = copy.deepcopy(wake_game)
-    #game_copy = cPickle.loads(cPickle.dumps(wake_game))
-    # print(type(game_copy))
     return game_copy
 
     new_position = Position()
@@ -478,7 +476,8 @@ def copy_game_object(wake_game :WakeGame) -> WakeGame:
         elif attribute == 'piece_map':
             # Custom Dictionary Copy
             # The value for each key is a set
-            #new_position.piece_map = copy.deepcopy(wake_game.position.piece_map)    # TODO
+            # new_position.piece_map = copy.deepcopy(
+            #                          wake_game.position.piece_map) # TODO
             new_position.piece_map = {}
             for key, value in wake_game.position.piece_map.items():
                 new_position.piece_map[key] = set(value)
@@ -495,7 +494,7 @@ def copy_game_object(wake_game :WakeGame) -> WakeGame:
 
             setattr(new_position, attribute,
                     getattr(wake_game.position, attribute))
-            
+
     game_copy.position = new_position
     return game_copy
 
@@ -543,7 +542,7 @@ def minimax_root(chess: Game, wake_game: WakeGame,
     #                           is_maximising=True,
     #                           alpha=MINUS_INFINITY,
     #                           beta=INFINITY))
-    print(max(scores), "M") #  TODO
+    print(max(scores), "M")  # TODO
     quit()
 
     # TODO
@@ -626,8 +625,10 @@ def minimax(chess: Game, wake_game: WakeGame,
             game_copy = copy_game_object(wake_game)
 
             # Make the move so that it can be evaluated
-            move_result = game_copy.position.wake_makemove(wake_move)
-
+            move_result, original = game_copy.position.wake_makemove(wake_move,
+                                                                     {})
+            print("MAX DONE")  # TODO P
+            print(original)
             if move_result.is_illegal_move:
                 continue
 
@@ -715,7 +716,8 @@ def minimax(chess: Game, wake_game: WakeGame,
             game_copy = copy_game_object(wake_game)
 
             # Make the move so that it can be evaluated
-            move_result = game_copy.position.wake_makemove(wake_move)
+            move_result, original = game_copy.position.wake_makemove(wake_move,
+                                                                     {})
 
             if move_result.is_illegal_move:
                 continue  # TODO REMOVE BELOW
@@ -812,7 +814,7 @@ def minimax_root1(chess: Game, wake_game: WakeGame,
     #                           is_maximising=True,
     #                           alpha=MINUS_INFINITY,
     #                           beta=INFINITY))
-    print(max(scores), "M") # TODO P REMOVE BELOW
+    print(max(scores), "M")  # TODO P REMOVE BELOW
     quit()
 
     # TODO
@@ -880,7 +882,7 @@ def minimax1(chess: Game, wake_game: WakeGame,
         (to_file_number, to_rank_number) = coords_formula(to_file,
                                                           to_rank)
 
-        print(879)  #  TODO P
+        print(879)  # TODO P
         # Convert the move into the WakeEngine format
         wake_move = create_wake_move(wake_game,
                                      from_file, from_rank,
@@ -888,7 +890,7 @@ def minimax1(chess: Game, wake_game: WakeGame,
 
         # Make the move so that it can be evaluated
         game_copy = copy.deepcopy(wake_game)
-        move_result = game_copy.position.wake_makemove(wake_move)
+        move_result, original = game_copy.position.wake_makemove(wake_move)
 
         if move_result.is_illegal_move:
             # this should never happen because
@@ -1217,7 +1219,7 @@ def player_move_validation_loop(chess: Game, wake_game: WakeGame,
             e.is_error_from_input_file()
             continue
 
-        print(1216)  #  TODO P
+        print(1216)  # TODO P
         # Convert the move into the WakeEngine format
         wake_move = create_wake_move(wake_game,
                                      from_file, from_rank,
@@ -1225,7 +1227,7 @@ def player_move_validation_loop(chess: Game, wake_game: WakeGame,
 
         # Check legality of Player's move
         # If legal, the move is played
-        move_result = wake_game.position.wake_makemove(wake_move)
+        move_result, original = wake_game.position.wake_makemove(wake_move, {})
 
         if move_result.is_king_in_check:
             chess.display(print_string)

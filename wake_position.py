@@ -3,8 +3,9 @@ import copy  # TODO RE copy/deepcopy
 import numpy as np
 from math import inf
 from itertools import product
-from typing import Optional, NoReturn
+from typing import Optional, NoReturn, Literal
 from copy import deepcopy
+from time import sleep  # todo REMOVE
 
 
 from extras import CustomException
@@ -178,14 +179,14 @@ class Position:
         print("MEM")
         quit()  # TODO
 
-#  TODO
+#  TODO REMOVE
 
     def __copy__(self):
         cls = self.__class__
         result = cls.__new__(cls)
         result.__dict__.update(self.__dict__)
         return result
-    
+
     def __deepcopy__(self, memo):
         cls = self.__class__
         result = cls.__new__(cls)
@@ -196,13 +197,15 @@ class Position:
         for key, value in self.piece_map.items():
             result.piece_map[key] = set(value)
 
-        result.castle_rights = {Rival.PLAYER: list(self.castle_rights[Rival.PLAYER]),
-                                Rival.COMPUTER: list(self.castle_rights[Rival.COMPUTER])}
+        result.castle_rights = {Rival.PLAYER:
+                                list(self.castle_rights[Rival.PLAYER]),
+                                Rival.COMPUTER:
+                                list(self.castle_rights[Rival.COMPUTER])}
         # EG {0: [True, True], 1: [True, True]}
 
-        result.mailbox = self.mailbox[:] # list
-        result.king_in_check = self.king_in_check[:] # list
-        result.position_history = self.position_history[:] # list
+        result.mailbox = self.mailbox[:]  # list
+        result.king_in_check = self.king_in_check[:]  # list
+        result.position_history = self.position_history[:]  # list
 
         memo[id(self)] = result
         for k, v in self.__dict__.items():
@@ -243,43 +246,74 @@ class Position:
     # -------------------------------------------------------------
 
     # TODO
-    def wake_makemove(self, move) -> MoveResult:
+    def wake_makemove(self,
+                      move: Move,
+                      original: dict) -> MoveResult:
         # if self.rival_to_move != move.rival_identity:  # TODO
         #     return self.make_illegal_move_result()
 
         # original_position = copy.deepcopy(self.__dict__) TODO
         original_position = copy.deepcopy(self)
 
-        if not self.is_legal_move(move):
-            return self.make_illegal_move_result()
+        legal, original = self.is_legal_move(move, original)
+        if not legal:
+            return self.make_illegal_move_result(), original
 
         if move.is_capture:
+            original['halfmove_clock'] = self.halfmove_clock
             self.halfmove_clock = 0
-            self.remove_opponent_piece_from_square(move.to_square)
+            original = (
+                self.remove_opponent_piece_from_square(move.to_square,
+                                                       original))
 
         if self.is_en_passant_capture:
             if move.rival_identity == Rival.PLAYER:
-                self.remove_opponent_piece_from_square(move.to_square - 8)
+                original = (
+                    self.remove_opponent_piece_from_square(move.to_square - 8,
+                                                           original)
+                )
             if move.rival_identity == Rival.COMPUTER:
-                self.remove_opponent_piece_from_square(move.to_square + 8)
+                original = (
+                    self.remove_opponent_piece_from_square(move.to_square + 8,
+                                                           original)
+                )
 
+        original['is_en_passant_capture'] = self.is_en_passant_capture
         self.is_en_passant_capture = False
 
         if move.piece_type_number in {Piece.wP, Piece.bP}:
+            if 'halfmove_clock' not in original:
+                original['halfmove_clock'] = self.halfmove_clock
             self.halfmove_clock = 0
 
         # update both piece_map and mailbox
+        map_key = f'piece_map {move.piece_type_number}'
+        assert (map_key not in original)
+        original[map_key] = set(self.piece_map[move.piece_type_number])
+        from_key = f'mailbox {move.from_square}'
+        assert (from_key not in original)
+        original[from_key] = self.mailbox[move.from_square]
+        to_key = f'mailbox {move.to_square}'
+        assert (to_key not in original)
+        original[to_key] = self.mailbox[move.to_square]
+
         self.piece_map[move.piece_type_number].remove(move.from_square)
         self.piece_map[move.piece_type_number].add(move.to_square)
         self.mailbox[move.from_square] = None
         self.mailbox[move.to_square] = move.piece_type_number
+
         # TODO Update Game
 
         if move.is_promotion:
             self.promote_pawn(move)
 
         if move.is_castling:
-            self.move_rooks_for_castling(move)
+            original = self.move_rooks_for_castling(move,
+                                                    original)
+
+        if 'halfmove_clock' not in original:
+            original['halfmove_clock'] = self.halfmove_clock
+        original['halfmove'] = self.halfmove
 
         self.halfmove_clock += 1
         self.halfmove += 1
@@ -287,50 +321,59 @@ class Position:
         castle_rights = self.castle_rights[move.rival_identity]
 
         if any(castle_rights):
-            self.adjust_castling_rights(move)
+            original = self.adjust_castling_rights(move, original)
 
         if self.en_passant_side != move.rival_identity:
+            if 'en_passant_target' not in original:
+                original['en_passant_target'] = self.en_passant_target
+
             self.en_passant_target = None
 
-        self.board.update_position_bitboards(self.piece_map)
-        self.update_attack_bitboards()
+        original = self.board.update_position_bitboards(self.piece_map,
+                                                        original)
+        original = self.update_attack_bitboards(original)
+
         self.evaluate_king_check()
 
         if self.king_in_check[move.rival_identity]:
             print("RESET")  # TODO
             self.reset_state_to(original_position)
-            return self.make_king_in_check_result()
+            return self.make_king_in_check_result(), original
 
         other_rival = (Rival.COMPUTER if move.rival_identity == Rival.PLAYER
                        else Rival.PLAYER)
 
         if (self.king_in_check[other_rival]
            and not self.any_legal_moves(other_rival)):
-            return self.make_checkmate_result()
+            return self.make_checkmate_result(), original
 
         if (not self.king_in_check[other_rival]
            and not self.any_legal_moves(other_rival)):
-            return self.make_stalemate_result()
+            return self.make_stalemate_result(), original
 
         # 50-move rule draw (50 moves by each player = 100 half-moves)
         if self.halfmove_clock >= 100:
             print("Draw by 50-move rule")  # TODO
-            return self.make_draw_result()
+            return self.make_draw_result(), original
 
         if self.is_threefold_repetition():
             print("Draw by 3-fold repetition")  # TODO
-            return self.make_draw_result()
+            return self.make_draw_result(), original
 
         if self.is_insufficient_material():
             print("Draw by insufficient material")  # TODO
-            return self.make_draw_result()
+            return self.make_draw_result(), original
+
+        original['position_history'] = len(self.position_history)
+        original['rival_to_move'] = self.rival_to_move
 
         self.position_history.append(generate_fen(self))  # TODO
         self.rival_to_move = switch_rival(self.rival_to_move)
 
-        return self.make_move_result()
+        print("RET", original)
+        return self.make_move_result(), original
 
-    def promote_pawn(self, move):
+    def promote_pawn(self, move: Move) -> None:
         while True:
             promotion_piece = input("Choose promotion piece.")
             promotion_piece = promotion_piece.lower()
@@ -349,7 +392,7 @@ class Position:
             self.mailbox[move.to_square] = new_piece
             break
 
-    def any_legal_moves(self, rival_to_move):
+    def any_legal_moves(self, rival_to_move: Literal[1, 0]) -> bool:
         """
         Returns True if there are any legal moves
         """
@@ -368,7 +411,7 @@ class Position:
             return True
         return False
 
-    def has_king_move(self, rival_to_move):
+    def has_king_move(self, rival_to_move: Literal[1, 0]) -> bool:
         """
         Returns True if there is a legal king move
         for the given colour/rival from the given square
@@ -408,7 +451,7 @@ class Position:
 
         return False
 
-    def has_rook_move(self, rival_to_move):
+    def has_rook_move(self, rival_to_move: Literal[1, 0]) -> bool:
         rook_rival_map = {
             Rival.PLAYER: (self.player_rook_attacks, Piece.wR),
             Rival.COMPUTER: (self.computer_rook_attacks, Piece.bR),
@@ -432,7 +475,7 @@ class Position:
                     return True
         return False
 
-    def has_queen_move(self, rival_to_move):
+    def has_queen_move(self, rival_to_move: Literal[1, 0]) -> bool:
         queen_rival_map = {
             Rival.PLAYER: (self.player_queen_attacks, Piece.wQ),
             Rival.COMPUTER: (self.computer_queen_attacks, Piece.bQ),
@@ -456,7 +499,7 @@ class Position:
                     return True
         return False
 
-    def has_knight_move(self, rival_to_move):
+    def has_knight_move(self, rival_to_move: Literal[1, 0]) -> bool:
         knight_rival_map = {
             Rival.PLAYER: (self.player_knight_attacks, Piece.wN),
             Rival.COMPUTER: (self.computer_knight_attacks, Piece.bN),
@@ -480,7 +523,7 @@ class Position:
                     return True
         return False
 
-    def has_bishop_move(self, rival_to_move):
+    def has_bishop_move(self, rival_to_move: Literal[1, 0]) -> bool:
         bishop_rival_map = {
             Rival.PLAYER: (self.player_bishop_attacks, Piece.wB),
             Rival.COMPUTER: (self.computer_bishop_attacks, Piece.bB),
@@ -504,7 +547,7 @@ class Position:
                     return True
         return False
 
-    def has_pawn_move(self, rival_to_move):
+    def has_pawn_move(self, rival_to_move: Literal[1, 0]) -> bool:
         pawn_rival_map = {
             Rival.PLAYER: (self.player_pawn_attacks
                            & self.player_pawn_moves, Piece.wP),
@@ -530,21 +573,34 @@ class Position:
                     return True
         return False
 
-    def remove_opponent_piece_from_square(self, to_square):
+    def remove_opponent_piece_from_square(self, to_square: int,
+                                          original: dict = {}) -> dict:
         target = self.mailbox[to_square]
         if target is not None:
+            # target is a number
+            map_key = f'piece_map {target}'
+            mailbox_key = f'mailbox {to_square}'
+            if map_key not in original:  # original value not already saved
+                original[map_key] = set(self.piece_map[target])
+            if mailbox_key not in original:  # original value not already saved
+                original[mailbox_key] = self.piece_map[target]
+
             self.piece_map[target].remove(to_square)
             self.mailbox[to_square] = None
+        return original
 
-    def update_attack_bitboards(self):
-        self.reset_attack_bitboards()
+    def update_attack_bitboards(self, original: dict = {}) -> dict:
+        original = self.reset_attack_bitboards(original)
+
         for piece, squares in self.piece_map.items():
 
             # PAWNS
             if piece == Piece.wP:
+                original['player_pawn_moves'] = self.player_pawn_moves
                 for square in squares:
                     self.update_legal_pawn_moves(square, Rival.PLAYER)
             if piece == Piece.bP:
+                original['computer_pawn_moves'] = self.player_pawn_moves
                 for square in squares:
                     self.update_legal_pawn_moves(square, Rival.COMPUTER)
 
@@ -589,8 +645,13 @@ class Position:
                 for square in squares:
                     self.update_legal_king_moves(square, Rival.COMPUTER)
 
-    def adjust_castling_rights(self, move):
+        return original
+
+    def adjust_castling_rights(self, move: Move,
+                               original: dict = {}) -> dict:
+
         if move.piece_type_number in {Piece.wK, Piece.bK, Piece.wR, Piece.bR}:
+            original['castling_rights'] = list(self.castle_rights)
 
             # If a KING piece is being moved, then from this point onwards:
             # the KING can no longer be used in a castling move.
@@ -614,7 +675,10 @@ class Position:
                 if move.from_square == Square.A8:
                     self.castle_rights[Rival.COMPUTER][QUEENSIDE] = False
 
-    def move_rooks_for_castling(self, move):
+        return original
+
+    def move_rooks_for_castling(self, move: Move,
+                                original: dict = {}) -> dict:
 
         square_map = {
             Square.G1: (Square.H1, Square.F1),
@@ -627,12 +691,40 @@ class Position:
         from_square, to_square = square_map[move.to_square]
 
         # Update both piece_map and mailbox
+
+        map_key = f'piece_map {rook_piece}'
+        assert (map_key not in original)
+        original[map_key] = set(self.piece_map[rook_piece])
+        from_key = f'mailbox {from_square}'
+        assert (from_key not in original)
+        original[from_key] = self.mailbox[from_square]
+        to_key = f'mailbox {to_square}'
+        assert (to_key not in original)
+        original[to_key] = self.mailbox[to_square]
+
         self.piece_map[rook_piece].remove(from_square)
         self.piece_map[rook_piece].add(to_square)
         self.mailbox[from_square] = None
         self.mailbox[to_square] = rook_piece
 
-    def reset_attack_bitboards(self):
+        return original
+
+    def reset_attack_bitboards(self, original: dict = {}) -> dict:
+        original['player_rook_attacks'] = self.player_rook_attacks
+        original['computer_rook_attacks'] = self.computer_rook_attacks
+        original['player_bishop_attacks'] = self.player_bishop_attacks
+        original['computer_bishop_attacks'] = self.computer_bishop_attacks
+        original['player_knight_attacks'] = self.player_knight_attacks
+        original['computer_knight_attacks'] = self.computer_knight_attacks
+        original['player_queen_attacks'] = self.player_queen_attacks
+        original['computer_queen_attacks'] = self.computer_queen_attacks
+        original['player_king_attacks'] = self.player_king_attacks
+        original['computer_king_attacks'] = self.computer_king_attacks
+        original['player_pawn_attacks'] = self.player_pawn_attacks
+        original['computer_pawn_attacks'] = self.computer_pawn_attacks
+        original['player_pawn_moves'] = self.player_pawn_moves
+        original['computer_pawn_moves'] = self.computer_pawn_moves
+
         self.player_rook_attacks = make_uint64_zero()
         self.computer_rook_attacks = make_uint64_zero()
         self.player_bishop_attacks = make_uint64_zero()
@@ -644,68 +736,87 @@ class Position:
         self.player_king_attacks = make_uint64_zero()
         self.computer_king_attacks = make_uint64_zero()
 
+        return original
+
     # -------------------------------------------------------------
     # MOVE LEGALITY CHECKING
     # -------------------------------------------------------------
 
-    def is_legal_move(self, move: Move) -> bool | NoReturn:
+    def is_legal_move(self, move: Move,
+                      original: dict = None) -> tuple[bool, dict] | NoReturn:
         """
         For a given move, returns True if it is legal given the Position state
         """
+        if original is None:
+            original = {}
+        # print("O=", original)
+        # sleep(5)  # TODO  REMOVE
+
         piece_type_number = move.piece_type_number
 
         if self.is_capture(move):
             move.is_capture = True
 
-        #  print(627)  # TODO REMOVE P
         match piece_type_number:
             case Piece.wB | Piece.bB:
-                #  print(1, self.is_legal_rook_move(move))  # TODO REMOVE P
-                return self.is_legal_bishop_move(move)
+                #  print(1, self.is_legal_bishop_move(move))  # TODO REMOVE P
+                return self.is_legal_bishop_move(move), original
 
             case Piece.wR | Piece.bR:
                 #  print(2, self.is_legal_rook_move(move))  # TODO REMOVE P
-                return self.is_legal_rook_move(move)
+                return self.is_legal_rook_move(move), original
 
             case Piece.wN | Piece.bN:
                 #  print(3, self.is_legal_knight_move(move))  # TODO REMOVE P
-                return self.is_legal_knight_move(move)
+                return self.is_legal_knight_move(move), original
 
             case Piece.wQ | Piece.bQ:
                 #  print(4, self.is_legal_queen_move(move))  # TODO REMOVE P
-                return self.is_legal_queen_move(move)
+                return self.is_legal_queen_move(move), original
 
             case Piece.wK | Piece.bK:
                 is_legal_king_move = self.is_legal_king_move(move)
                 if not is_legal_king_move:
                     #  print(5, "KING")  # TODO REMOVE P
-                    return False
+                    return False, original
 
                 if self.is_castling(move):
                     move.is_castling = True
-                return True
+                return True, original
 
             case Piece.wP | Piece.bP:
                 is_legal_pawn_move = self.is_legal_pawn_move(move)
 
                 if not is_legal_pawn_move:
-                    return False
+                    return False, original
 
                 if self.is_promotion(move):
                     move.is_promotion = True
-                    return True
+                    return True, original
 
                 potential_en_passant_target = (
                     self.try_get_en_passant_target(move))
 
                 if potential_en_passant_target is not None:
+                    # print(original) # todo
+                    assert ('en_passant_side' not in original)
+                    assert ('en_passant_target' not in original)
+                    original['en_passant_side'] = self.en_passant_side
+                    original['en_passant_target'] = self.en_passant_target
+                    # print("EP", self.en_passant_side, self.en_passant_target,
+                    #       potential_en_passant_target, move.rival_identity)
+                    #  TODO
+
                     self.en_passant_side = move.rival_identity
                     self.en_passant_target = int(potential_en_passant_target)
 
                 if move.to_square == self.en_passant_target:
+                    assert ('en_passant_target' not in original)
+                    original['en_passant_target'] = self.en_passant_target
+
                     self.is_en_passant_capture = True
 
-                return True
+                return True, original
 
             case _:
                 # Defensive Guard
@@ -877,7 +988,7 @@ class Position:
                 return False
             return True
 
-    def is_legal_knight_move(self, move):
+    def is_legal_knight_move(self, move: Move) -> bool:
         current_square_bb = set_bit(make_uint64_zero(), move.from_square)
         if move.piece_type_number == Piece.wN:
             # If the colour of the knight on the FROM square does not match
@@ -897,7 +1008,7 @@ class Position:
                 return False
             return True
 
-    def is_legal_queen_move(self, move):
+    def is_legal_queen_move(self, move: Move) -> bool:
         current_square_bb = set_bit(make_uint64_zero(), move.from_square)
         if move.piece_type_number == Piece.wQ:
             # If the colour of the queen on the FROM square does not match
@@ -917,7 +1028,7 @@ class Position:
                 return False
             return True
 
-    def is_legal_king_move(self, move):
+    def is_legal_king_move(self, move: Move) -> bool:
         current_square_bb = set_bit(make_uint64_zero(), move.from_square)
         if move.piece_type_number == Piece.wK:
             # If the colour of the king on the FROM square does not match
@@ -941,7 +1052,7 @@ class Position:
     # PIECE MOVE LEGALITY CHECKING HELPERS
     # -------------------------------------------------------------
 
-    def is_not_pawn_motion_or_attack(self, move):
+    def is_not_pawn_motion_or_attack(self, move: Move) -> bool:
         to_sq_bb = set_bit(make_uint64_zero(), move.to_square)
         if move.rival_identity == Rival.PLAYER:
             if (
@@ -965,7 +1076,7 @@ class Position:
 
         return False
 
-    def is_not_bishop_attack(self, move):
+    def is_not_bishop_attack(self, move: Move) -> bool:
         moving_to_square_bb = set_bit(make_uint64_zero(), move.to_square)
         if move.rival_identity == Rival.PLAYER:
             if not (self.player_bishop_attacks & moving_to_square_bb):
@@ -976,7 +1087,7 @@ class Position:
 
         return False
 
-    def is_not_knight_attack(self, move):
+    def is_not_knight_attack(self, move: Move) -> bool:
         moving_to_square_bb = set_bit(make_uint64_zero(), move.to_square)
         if move.rival_identity == Rival.PLAYER:
             if not (self.player_knight_attacks & moving_to_square_bb):
@@ -987,7 +1098,7 @@ class Position:
 
         return False
 
-    def is_not_king_attack(self, move):
+    def is_not_king_attack(self, move: Move) -> bool:
         moving_to_square_bb = set_bit(make_uint64_zero(), move.to_square)
         if move.rival_identity == Rival.PLAYER:
             if not (self.player_king_attacks & moving_to_square_bb):
@@ -998,7 +1109,7 @@ class Position:
 
         return False
 
-    def is_not_queen_attack(self, move):
+    def is_not_queen_attack(self, move: Move) -> bool:
         moving_to_square_bb = set_bit(make_uint64_zero(), move.to_square)
         if move.rival_identity == Rival.PLAYER:
             if not (self.player_queen_attacks & moving_to_square_bb):
@@ -1009,7 +1120,7 @@ class Position:
 
         return False
 
-    def is_not_rook_attack(self, move):
+    def is_not_rook_attack(self, move: Move) -> bool:
         moving_to_square_bb = set_bit(make_uint64_zero(), move.to_square)
         if move.rival_identity == Rival.PLAYER:
             if not (self.player_rook_attacks & moving_to_square_bb):
@@ -1021,7 +1132,7 @@ class Position:
         return False
 
     @staticmethod
-    def is_castling(move):
+    def is_castling(move: Move) -> bool:
         """
         Is this a possible castling move?
         If there is a king piece on E1,
@@ -1040,7 +1151,7 @@ class Position:
                 return True
         return False
 
-    def is_promotion(self, pawn_move):
+    def is_promotion(self, pawn_move: Move) -> bool:
         """ Has the rival pawn reached the other end of the board? """
         if (pawn_move.rival_identity == Rival.PLAYER and
            pawn_move.to_square in Rank.RANK_X8):
@@ -1056,7 +1167,7 @@ class Position:
 
     def update_legal_knight_moves(
         self, move_from_square: np.uint64, rival_to_move: int
-    ) -> np.uint64:
+    ) -> None:
         """
         Gets the legal knight moves from the given Move instance
         :param move_from_square:
@@ -1075,15 +1186,13 @@ class Position:
             legal_knight_moves &= ~self.board.computer_pieces_bb
             self.computer_knight_attacks |= legal_knight_moves
 
-        return legal_knight_moves
-
     # -------------------------------------------------------------
     # LEGAL BISHOP MOVES
     # -------------------------------------------------------------
 
     def update_legal_bishop_moves(
         self, move_from_square: np.uint64, rival_to_move: int
-    ) -> np.uint64:
+    ) -> None:
         """
         Pseudo-Legal Bishop Moves
         Implements the classical approach
@@ -1145,8 +1254,6 @@ class Position:
 
         if rival_to_move == Rival.COMPUTER:
             self.computer_bishop_attacks |= legal_moves
-
-        return legal_moves
 
     # -------------------------------------------------------------
     # LEGAL ROOK MOVES
@@ -1222,7 +1329,7 @@ class Position:
 
     def update_legal_pawn_moves(self,
                                 move_from_square: np.uint64,
-                                rival_to_move: int):
+                                rival_to_move: int) -> None:
         """
         Pseudo-Legal Pawn Moves:
         - Pawn non-attacks that don't intersect with occupied squares
@@ -1291,7 +1398,7 @@ class Position:
     # -------------------------------------------------------------
 
     def update_legal_queen_moves(self, move_from_square: np.uint64,
-                                 rival_to_move: int):
+                                 rival_to_move: int) -> None:
         """
         Pseudo-Legal Queen Moves:  bitwise OR of legal Bishop moves, Rook moves
 
@@ -1392,7 +1499,8 @@ class Position:
     # -------------------------------------------------------------
 
     def update_legal_king_moves(self,
-                                move_from_square: int, rival_to_move: int):
+                                move_from_square: int,
+                                rival_to_move: int) -> None:
         """
         Pseudo-Legal King Moves: one step in any direction
 
@@ -1678,7 +1786,8 @@ class Position:
     # THe GENERATED LIST WILL BE USED BY THE MINIMAX ALGORITHM
     # -------------------------------------------------------------
 
-    def all_legal_moves_list(self, rival_to_move: int) -> list[tuple]:
+    def all_legal_moves_list(self,
+                             rival_to_move: Literal[1, 0]) -> list[tuple]:
         """
         Returns a list of all the available legal moves (if any)
         for a particular colour i.e. 'rival_to_move'
@@ -1816,7 +1925,7 @@ class Position:
 
         # if no attacks, return []
         if not knight_attacks.any():
-            print("WHYN") # TODO P
+            print("WHYN")  # TODO P
             quit()
             return []
 
@@ -1882,7 +1991,7 @@ class Position:
 
         # if no moves, return []
         if not all_pawn_moves.any():
-            print("WHYP") # TODO P
+            print("WHYP")  # TODO P
             quit()
             return []
 
@@ -1904,10 +2013,12 @@ class Position:
         return moves_list
 
 
-def evaluate_move(move, position: Position) -> MoveResult:
+def evaluate_move(move: Move,
+                  position: Position) -> MoveResult:
     """
     Evaluates if a move is fully legal
     """
+    original = {}  # TODO
 
     if not position.is_legal_move(move):
         #  print(position.king_in_check)  # TODO REMOVE P
