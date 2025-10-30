@@ -254,9 +254,9 @@ class Position:
         # TODO REMOVE
         original_position = copy.deepcopy(self)
 
-        move_result, original = update_position_and_move(self, move)
+        move_result, original = update_wakegame_position(self, move)
         if move_result is not None:
-            # a move error occurred
+            # a chess move error has occurred
             return move_result, original
 
         if self.king_in_check[move.rival_identity]:
@@ -277,21 +277,27 @@ class Position:
 
         # 50-move rule draw (50 moves by each player = 100 half-moves)
         if self.halfmove_clock >= 100:
-            print("Draw by 50-move rule")  # TODO
+            print("Draw by 50-move rule")  # TODO RE HISTORY
             return self.make_draw_result(), original
 
         if self.is_threefold_repetition():
-            print("Draw by 3-fold repetition")  # TODO
+            print("Draw by 3-fold repetition")  # TODO RE HISTORY
             return self.make_draw_result(), original
 
         if self.is_insufficient_material():
-            print("Draw by insufficient material")  # TODO
+            print("Draw by insufficient material")  # TODO RE HISTORY
             return self.make_draw_result(), original
 
         original['position_history'] = len(self.position_history)
+        print(self.position_history)
+        print("PH", original['position_history'])
+        #  TODO
         original['rival_to_move'] = self.rival_to_move
-
+    
         self.position_history.append(generate_fen(self))  # TODO
+        print("PH2", len(self.position_history))
+        print(self.position_history)
+
         self.rival_to_move = switch_rival(self.rival_to_move)
 
         print("RET", original)
@@ -1948,7 +1954,7 @@ class Position:
         #  TODO
         return moves_list
 
-def update_position_and_move(position: Position,
+def update_wakegame_position(position: Position,
                              move: Move
 ) -> tuple[Optional[MoveResult], dict]:
     """
@@ -1967,9 +1973,12 @@ def update_position_and_move(position: Position,
     if move.is_capture:
         original['halfmove_clock'] = position.halfmove_clock
         position.halfmove_clock = 0
+        print("TOSQ1", move.to_square)
         original = (
+            # NOTE: the same value 'move.to_square' potentially
+            # is removed twice. Here and in 'update both piece_map' below
             position.remove_opponent_piece_from_square(move.to_square,
-                                                    original))
+                                                       original))
 
     if position.is_en_passant_capture:
         if move.rival_identity == Rival.PLAYER:
@@ -1999,10 +2008,11 @@ def update_position_and_move(position: Position,
     assert (from_key not in original)
     original[from_key] = position.mailbox[move.from_square]
     to_key = f'mailbox {move.to_square}'
-    print
-    assert (to_key not in original)
-    original[to_key] = position.mailbox[move.to_square]
+    if to_key not in original: # see comments regarding 'move.to_square'
+        original[to_key] = position.mailbox[move.to_square]
 
+    # NOTE: 'move.to_square' may have already been removed in the above
+    # IF statement regarding 'if move.is_capture:'
     position.piece_map[move.piece_type_number].remove(move.from_square)
     position.piece_map[move.piece_type_number].add(move.to_square)
     position.mailbox[move.from_square] = None
@@ -2049,17 +2059,50 @@ def evaluate_move(move: Move,
     Evaluates if a move is fully legal
     """
 
-    move_result, _ = update_position_and_move(position, move)
+    move_result, _ = update_wakegame_position(position, move)
     if move_result is not None:
         # a move error occurred
         return move_result
 
     if position.king_in_check[position.rival_to_move]:
         print("RIVALTOMOVE", position.rival_to_move)  # TODO REMOVE P
+        pprint_pieces(position.piece_map)
         quit()
+        # TODO
+        # return position.make_illegal_move_result("own king in check")
         return position.make_illegal_move_result()
 
     return position.make_move_result()
+
+
+def undo_changes(position: Position,
+                 original: dict) -> None:
+    """
+    Revert the changes made to the Position object
+    without the need to use 'copy.deepcopy'
+    """
+    for attribute, value in original.items():
+        if attribute.startswith('piece_map'):
+            # EG piece_map 7 {48, 49, 50, 51, 52, 53, 54, 55}
+            [_, str_number] = attribute.split(" ", 1)
+            position.piece_map[int(str_number)] = value
+
+        elif attribute.startswith('mailbox'):
+            # EG mailbox 47 None, mailbox 62 9
+            [_, str_number] = attribute.split(" ", 1)
+            position.mailbox[int(str_number)] = value
+
+        elif attribute.endswith('_bb'):
+            # EG player_P_bb 268496640
+            setattr(position.board, attribute, value)
+
+        elif attribute == 'position_history':
+            # EG position_history 1
+            position.position_history = position.position_history[:value]
+
+        else:
+            # EG player_pawn_attacks 171815403520, rival_to_move 1
+            setattr(position, attribute, value)
 
 
 """

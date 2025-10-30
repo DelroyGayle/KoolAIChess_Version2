@@ -160,7 +160,10 @@ class WakeBoard:
     # -------------------------------------------------------------
 
     def update_position_bitboards(self, piece_map: dict,
-                                  original: dict = {}) -> dict:
+                                  original: dict = None) -> dict:
+        if original is None:
+            original = {}
+        
         for key, val in piece_map.items():
 
             match key:
