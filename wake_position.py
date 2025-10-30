@@ -256,7 +256,7 @@ class Position:
 
         original['position_history'] = len(self.position_history)
         original['rival_to_move'] = self.rival_to_move
-    
+
         self.position_history.append(generate_fen(self))  # TODO
         self.rival_to_move = switch_rival(self.rival_to_move)
 
@@ -335,7 +335,7 @@ class Position:
 
         for to_square in king_squares:
             move = Move(king_piece, (king_from_square, to_square))
-            move = evaluate_move(move, copy.deepcopy(self))
+            move = evaluate_move(move, self)
             if not move.is_illegal_move:
                 return True
 
@@ -360,7 +360,7 @@ class Position:
         for rook_from_square in list(current_rook_locations):
             for to_square in rook_attack_squares:
                 move = Move(rook_piece, (rook_from_square, to_square))
-                move = evaluate_move(move, copy.deepcopy(self))
+                move = evaluate_move(move, self)
                 if not move.is_illegal_move:
                     return True
         return False
@@ -384,7 +384,7 @@ class Position:
         for queen_from_square in list(current_queen_locations):
             for to_square in queen_squares:
                 move = Move(queen_piece, (queen_from_square, to_square))
-                move = evaluate_move(move, copy.deepcopy(self))
+                move = evaluate_move(move, self)
                 if not move.is_illegal_move:
                     return True
         return False
@@ -408,7 +408,7 @@ class Position:
         for knight_from_square in current_knight_locations:
             for to_square in knight_squares:
                 move = Move(knight_piece, (knight_from_square, to_square))
-                move = evaluate_move(move, copy.deepcopy(self))
+                move = evaluate_move(move, self)
                 if not move.is_illegal_move:
                     return True
         return False
@@ -432,7 +432,7 @@ class Position:
         for bishop_from_square in current_bishop_locations:
             for to_square in bishop_squares:
                 move = Move(bishop_piece, (bishop_from_square, to_square))
-                move = evaluate_move(move, copy.deepcopy(self))
+                move = evaluate_move(move, self)
                 if not move.is_illegal_move:
                     return True
         return False
@@ -458,7 +458,7 @@ class Position:
         for pawn_from_square in list(current_pawn_locations):
             for to_square in pawn_squares:
                 move = Move(pawn_piece, (pawn_from_square, to_square))
-                move = evaluate_move(move, copy.deepcopy(self))
+                move = evaluate_move(move, self)
                 if not move.is_illegal_move:
                     return True
         return False
@@ -474,9 +474,9 @@ class Position:
             map_key = f'piece_map {target}'
             mailbox_key = f'mailbox {to_square}'
             if map_key not in original:  # original value not already saved
-                original[map_key] = set(self.piece_map[target])
+                original[map_key] = self.piece_map[target].copy()
             if mailbox_key not in original:  # original value not already saved
-                original[mailbox_key] = self.piece_map[target]
+                original[mailbox_key] = self.mailbox[to_square]
 
             self.piece_map[target].remove(to_square)
             self.mailbox[to_square] = None
@@ -1739,7 +1739,7 @@ class Position:
         moves_list = []
         for to_square in king_squares:
             move = Move(king_piece, (king_from_square, to_square))
-            move = evaluate_move(move, copy.deepcopy(self))
+            move = evaluate_move(move, self)
             if not move.is_illegal_move:
                 moves_list.append((king_from_square, to_square))
 
@@ -1805,7 +1805,7 @@ class Position:
         for queen_from_square in list(current_queen_locations):
             for to_square in queen_squares:
                 move = Move(queen_piece, (queen_from_square, to_square))
-                move = evaluate_move(move, copy.deepcopy(self))
+                move = evaluate_move(move, self)
                 if not move.is_illegal_move:
                     moves_list.append((queen_from_square, to_square))
 
@@ -1813,7 +1813,7 @@ class Position:
 
     def filter_evaluate_move(self, piece, from_square, to_square):
         move = Move(piece, (from_square, to_square))
-        move = evaluate_move(move, copy.deepcopy(self))
+        move = evaluate_move(move, self)
         return move
 
     def all_knight_moves(self, rival_to_move: int) -> list[tuple]:
@@ -1904,7 +1904,7 @@ class Position:
         for pawn_from_square in list(current_pawn_locations):
             for to_square in pawn_squares:
                 move = Move(pawn_piece, (pawn_from_square, to_square))
-                move = evaluate_move(move, copy.deepcopy(self))
+                move = evaluate_move(move, self)
                 if not move.is_illegal_move:
                     moves_list.append((pawn_from_square, to_square))
 
@@ -1914,9 +1914,10 @@ class Position:
         #  TODO
         return moves_list
 
+
 def update_wakegame_position(position: Position,
                              move: Move
-) -> tuple[Optional[MoveResult], dict]:
+                             ) -> tuple[Optional[MoveResult], dict]:
     """
     By maintaining a dictionary ('original')
     of any changes made to the Position object,
@@ -1943,12 +1944,12 @@ def update_wakegame_position(position: Position,
         if move.rival_identity == Rival.PLAYER:
             original = (
                 position.remove_opponent_piece_from_square(move.to_square - 8,
-                                                        original)
+                                                           original)
             )
         if move.rival_identity == Rival.COMPUTER:
             original = (
                 position.remove_opponent_piece_from_square(move.to_square + 8,
-                                                        original)
+                                                           original)
             )
 
     original['is_en_passant_capture'] = position.is_en_passant_capture
@@ -1962,12 +1963,12 @@ def update_wakegame_position(position: Position,
     # update both piece_map and mailbox
     map_key = f'piece_map {move.piece_type_number}'
     assert (map_key not in original)
-    original[map_key] = set(position.piece_map[move.piece_type_number])
+    original[map_key] = position.piece_map[move.piece_type_number].copy()
     from_key = f'mailbox {move.from_square}'
     assert (from_key not in original)
     original[from_key] = position.mailbox[move.from_square]
     to_key = f'mailbox {move.to_square}'
-    if to_key not in original: # see comments regarding 'move.to_square'
+    if to_key not in original:  # see comments regarding 'move.to_square'
         original[to_key] = position.mailbox[move.to_square]
 
     # NOTE: 'move.to_square' may have already been removed in the above
@@ -1984,7 +1985,7 @@ def update_wakegame_position(position: Position,
 
     if move.is_castling:
         original = position.move_rooks_for_castling(move,
-                                                original)
+                                                    original)
 
     if 'halfmove_clock' not in original:
         original['halfmove_clock'] = position.halfmove_clock
@@ -2005,20 +2006,24 @@ def update_wakegame_position(position: Position,
         position.en_passant_target = None
 
     original = position.board.update_position_bitboards(position.piece_map,
-                                                    original)
+                                                        original)
     original = position.update_attack_bitboards(original)
 
     position.evaluate_king_check()
 
     return None, original
-        
+
+
 def evaluate_move(move: Move,
                   position: Position) -> MoveResult:
     """
     Evaluates if a move is fully legal
     """
 
-    move_result, _ = update_wakegame_position(position, move)
+    move_result, original = update_wakegame_position(position, move)
+    # Undo all the changes made to the Position object
+    undo_changes(position, original)
+
     if move_result is not None:
         # a move error occurred
         return move_result

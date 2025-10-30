@@ -162,7 +162,7 @@ class WakeBoard:
                                   original: dict = None) -> dict:
         if original is None:
             original = {}
-        
+
         for key, val in piece_map.items():
 
             match key:

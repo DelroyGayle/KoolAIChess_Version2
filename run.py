@@ -584,14 +584,12 @@ def minimax(chess: Game, wake_game: WakeGame,
             # game_copy = copy_game_object(wake_game)
 
             # Make the move so that it can be evaluated
-            # move_result, original = game_copy.position.wake_makemove(wake_move)
+            # Keep a record of all the original values
+            # before any changes in 'original'
             move_result, original = wake_game.position.wake_makemove(wake_move)
-            
-            # print("MAX DONE")  # TODO P
-            # print(original)
 
             if move_result.is_illegal_move:
-                print('ill') # TODO REMOVE P
+                print('ill1')  # TODO REMOVE P
                 quit()
                 continue
 
@@ -608,20 +606,20 @@ def minimax(chess: Game, wake_game: WakeGame,
 
             if move_result.is_king_in_check:
                 # ignore this move
-                print('check') # TODO REMOVE P
+                print('check')  # TODO REMOVE P
                 quit()
                 continue
 
             if move_result.is_checkmate:
                 # if MAXIMISING, this is a win, return INFINITY
                 # otherwise this is a lost, return -INFINITY
-                print('checkmate') # TODO REMOVE P
+                print('checkmate')  # TODO REMOVE P
                 quit()
                 return INFINITY if is_maximising else MINUS_INFINITY
 
             if move_result.is_stalemate:
                 # this is a draw
-                print('stale') # TODO REMOVE P
+                print('stale')  # TODO REMOVE P
                 quit()
                 return 0
 
@@ -688,15 +686,13 @@ def minimax(chess: Game, wake_game: WakeGame,
                                          from_file, from_rank,
                                          to_file, to_rank)
 
-            # Make a deep copy of the game and its current position
-            # game_copy = copy_game_object(wake_game)
-
             # Make the move so that it can be evaluated
-            # move_result, original = game_copy.position.wake_makemove(wake_move)
+            # Keep a record of all the original values before
+            # any changes in 'original'
             move_result, original = wake_game.position.wake_makemove(wake_move)
 
             if move_result.is_illegal_move:
-                print('ill2') # TODO REMOVE P
+                print('ill2')  # TODO REMOVE P
                 quit()
                 continue  # TODO REMOVE BELOW
 
@@ -715,20 +711,20 @@ def minimax(chess: Game, wake_game: WakeGame,
 
             if move_result.is_king_in_check:
                 # ignore this move
-                print('check2') # TODO REMOVE P
+                print('check2')  # TODO REMOVE P
                 quit()
                 continue
 
             if move_result.is_checkmate:
                 # if MAXIMISING, this is a win, return INFINITY
                 # otherwise this is a lost, return -INFINITY
-                print('checkmate2') # TODO REMOVE P
+                print('checkmate2')  # TODO REMOVE P
                 quit()
                 return INFINITY if is_maximising else MINUS_INFINITY
 
             if move_result.is_stalemate:
                 # this is a draw
-                print('stale2') # TODO REMOVE P
+                print('stale2')  # TODO REMOVE P
                 quit()
                 return 0
 
@@ -753,7 +749,7 @@ def minimax(chess: Game, wake_game: WakeGame,
                                  not is_maximising,
                                  alpha,
                                  beta)
-  
+
             # Undo all the changes made to the Position object
             undo_changes(wake_game.position, original)
 
@@ -878,6 +874,8 @@ def minimax1(chess: Game, wake_game: WakeGame,
                                      to_file, to_rank)
 
         # Make the move so that it can be evaluated
+        # Keep a record of all the original values before changes in 'original'
+        # TODO
         game_copy = copy.deepcopy(wake_game)
         move_result, original = game_copy.position.wake_makemove(wake_move)
 
@@ -1217,8 +1215,13 @@ def player_move_validation_loop(chess: Game, wake_game: WakeGame,
 
         # Check legality of Player's move
         # If legal, the move is played
-        move_result, _ = wake_game.position.wake_makemove(wake_move)
+        # Keep a record of all the original values before changes in 'original'
+        move_result, original = wake_game.position.wake_makemove(wake_move)
+        # Undo all the changes made to the Position object
+        # TODO RE WHYN
+        # undo_changes(wake_game.position, original)
 
+        # TODO
         if move_result.is_king_in_check:
             chess.display(print_string)
             print("Illegal move because you are in check")
