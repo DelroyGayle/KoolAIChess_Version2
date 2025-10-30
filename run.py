@@ -30,7 +30,6 @@ from functools import cache
 from wake_constants import ALGEBRAIC_SQUARE_MAP, SQUARE_MAP, Rival
 from wake_game import clear_screen, WakeGame
 from wake_move import Move
-from make_copy import makecopy
 from wake_debug import pprint_pieces  # TODO REMOVE
 from wake_position import undo_changes
 
@@ -459,45 +458,6 @@ def evaluate(chess, level, piece_sign, prune_factor):
     return bestscore  # Done!
 
 
-def copy_game_object(wake_game: WakeGame) -> WakeGame:
-    #  TODO CLEANUP CODE
-    # game_copy = wake_game.clone()
-
-    game_copy = copy.deepcopy(wake_game)
-    return game_copy
-
-    new_position = Position()
-
-    for attribute in vars(wake_game.position):
-        if attribute == 'board':
-            new_position.board = copy.deepcopy(wake_game.position.board)
-
-        elif attribute == 'piece_map':
-            # Custom Dictionary Copy
-            # The value for each key is a set
-            # new_position.piece_map = copy.deepcopy(
-            #                          wake_game.position.piece_map) # TODO
-            new_position.piece_map = {}
-            for key, value in wake_game.position.piece_map.items():
-                new_position.piece_map[key] = set(value)
-
-        elif attribute in {
-                         'mailbox',
-                         'castle_rights',
-                         'king_in_check',
-                         'position_in_history', }:
-            setattr(new_position, attribute,
-                    makecopy(getattr(wake_game.position, attribute)))
-
-        else:
-
-            setattr(new_position, attribute,
-                    getattr(wake_game.position, attribute))
-
-    game_copy.position = new_position
-    return game_copy
-
-
 def minimax_root(chess: Game, wake_game: WakeGame,
                  piece_sign: int) -> int:   # TODO remove piece_sign
     """ TODO - ADD COMMENTS """
@@ -627,29 +587,8 @@ def minimax(chess: Game, wake_game: WakeGame,
             # move_result, original = game_copy.position.wake_makemove(wake_move)
             move_result, original = wake_game.position.wake_makemove(wake_move)
             
-            print("MAX DONE")  # TODO P
-            print(original)
-            #print(wake_game.position.piece_map[1] == original['piece_map 1'])
-            #print(wake_game.position.piece_map[7] == original['piece_map 7'])
-            if 'piece_map 7' in original:
-                print(wake_game.position.piece_map[7] == original['piece_map 7'])
-            if 'piece_map 1' in original:
-                print(wake_game.position.piece_map[1] == original['piece_map 1'])
-            if 'mailbox 48' in original:
-                print(wake_game.position.mailbox[48] == original['mailbox 48'])
-            #print(wake_game.position.mailbox[48] == original['mailbox 48'])
-            if 'mailbox 32' in original:
-                print(wake_game.position.mailbox[32] == original['mailbox 32'])
-            if 'mailbox 40' in original:
-                print(wake_game.position.mailbox[40] == original['mailbox 40'])
-            print(wake_game.position.halfmove == original['halfmove'])
-            #print(wake_game.position.half == original['half'])
-            print(wake_game.position.computer_rook_attacks == original['computer_rook_attacks'])
-            print(wake_game.position.computer_knight_attacks == original['computer_knight_attacks'])
-            print(wake_game.position.computer_pawn_attacks == original['computer_pawn_attacks'])
-            print(wake_game.position.player_queen_attacks == original['player_queen_attacks'])
-            print(wake_game.position.position_history)
-            print(wake_game.position.rival_to_move == original['rival_to_move'])
+            # print("MAX DONE")  # TODO P
+            # print(original)
 
             if move_result.is_illegal_move:
                 print('ill') # TODO REMOVE P
@@ -711,7 +650,6 @@ def minimax(chess: Game, wake_game: WakeGame,
                                  beta)
 
             # Undo all the changes made to the Position object
-            print(wake_game.position.position_history)
             undo_changes(wake_game.position, original)
 
             if the_score > max_score:
@@ -771,7 +709,7 @@ def minimax(chess: Game, wake_game: WakeGame,
                 print("INTERNAL ERROR 1")
                 print(from_square, to_square, wake_move, -1)
                 print(from_file + from_rank, to_file + to_rank)
-                pprint_pieces(game_copy.position.piece_map)
+                pprint_pieces(wake_game.position.piece_map)
                 # TODO RAISE EXCEPTION
                 quit()
 
@@ -817,7 +755,6 @@ def minimax(chess: Game, wake_game: WakeGame,
                                  beta)
   
             # Undo all the changes made to the Position object
-            print(wake_game.position.position_history)
             undo_changes(wake_game.position, original)
 
             if the_score < min_score:
@@ -978,7 +915,8 @@ def minimax1(chess: Game, wake_game: WakeGame,
         other_rival = (Rival.COMPUTER if rival == Rival.PLAYER
                        else Rival.PLAYER)
         current_score += minimax(chess,
-                                 game_copy,
+                                 # game_copy,
+                                 wake_game,
                                  level,
                                  current_score,
                                  other_rival,

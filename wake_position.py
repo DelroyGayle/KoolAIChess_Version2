@@ -4,8 +4,6 @@ import numpy as np
 from math import inf
 from itertools import product
 from typing import Optional, NoReturn, Literal
-from copy import deepcopy
-from time import sleep  # todo REMOVE
 
 from extras import CustomException
 
@@ -179,39 +177,6 @@ class Position:
         print("MEM")
         quit()  # TODO
 
-#  TODO REMOVE
-
-    def __copy__(self):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        result.__dict__.update(self.__dict__)
-        return result
-
-    def __deepcopy__(self, memo):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        result.__dict__.update(self.__dict__)
-
-        # piece_map is a Dictionary of Sets
-        result.piece_map = {}
-        for key, value in self.piece_map.items():
-            result.piece_map[key] = set(value)
-
-        result.castle_rights = {Rival.PLAYER:
-                                list(self.castle_rights[Rival.PLAYER]),
-                                Rival.COMPUTER:
-                                list(self.castle_rights[Rival.COMPUTER])}
-        # EG {0: [True, True], 1: [True, True]}
-
-        result.mailbox = self.mailbox[:]  # list
-        result.king_in_check = self.king_in_check[:]  # list
-        result.position_history = self.position_history[:]  # list
-
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
-        return result
-
     @property
     def occupied_squares_by_rival(self):
         return {
@@ -252,7 +217,7 @@ class Position:
         #     return self.make_illegal_move_result()
 
         # TODO REMOVE
-        original_position = copy.deepcopy(self)
+        # original_position = copy.deepcopy(self)
 
         move_result, original = update_wakegame_position(self, move)
         if move_result is not None:
@@ -261,7 +226,8 @@ class Position:
 
         if self.king_in_check[move.rival_identity]:
             print("RESET")  # TODO
-            self.reset_state_to(original_position)
+            quit()
+            # self.reset_state_to(original_position)
             return self.make_king_in_check_result(), original
 
         other_rival = (Rival.COMPUTER if move.rival_identity == Rival.PLAYER
@@ -289,18 +255,12 @@ class Position:
             return self.make_draw_result(), original
 
         original['position_history'] = len(self.position_history)
-        print(self.position_history)
-        print("PH", original['position_history'])
-        #  TODO
         original['rival_to_move'] = self.rival_to_move
     
         self.position_history.append(generate_fen(self))  # TODO
-        print("PH2", len(self.position_history))
-        print(self.position_history)
-
         self.rival_to_move = switch_rival(self.rival_to_move)
 
-        print("RET", original)
+        # print("RET", original)  TODO
         return self.make_move_result(), original
 
     def promote_pawn(self, move: Move) -> None:
@@ -1973,7 +1933,6 @@ def update_wakegame_position(position: Position,
     if move.is_capture:
         original['halfmove_clock'] = position.halfmove_clock
         position.halfmove_clock = 0
-        print("TOSQ1", move.to_square)
         original = (
             # NOTE: the same value 'move.to_square' potentially
             # is removed twice. Here and in 'update both piece_map' below
@@ -2065,9 +2024,6 @@ def evaluate_move(move: Move,
         return move_result
 
     if position.king_in_check[position.rival_to_move]:
-        print("RIVALTOMOVE", position.rival_to_move)  # TODO REMOVE P
-        pprint_pieces(position.piece_map)
-        quit()
         # TODO
         # return position.make_illegal_move_result("own king in check")
         return position.make_illegal_move_result()
