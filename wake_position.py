@@ -1975,7 +1975,7 @@ def update_wakegame_position(position: Position,
     if to_key not in original:
         original[to_key] = position.mailbox[move.to_square]
 
-    position.piece_map[move.piece_type_number].remove(move.from_square)
+    position.piece_map[move.piece_type_number].discard(move.from_square)
     position.piece_map[move.piece_type_number].add(move.to_square)
     position.mailbox[move.from_square] = None
     position.mailbox[move.to_square] = move.piece_type_number
