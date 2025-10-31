@@ -1,5 +1,3 @@
-import copy  # TODO RE copy/deepcopy
-
 import numpy as np
 from math import inf
 from itertools import product
@@ -215,9 +213,6 @@ class Position:
                       move: Move) -> tuple[MoveResult, dict]:
         # if self.rival_to_move != move.rival_identity:  # TODO
         #     return self.make_illegal_move_result()
-
-        # TODO REMOVE
-        # original_position = copy.deepcopy(self)
 
         move_result, original = update_wakegame_position(self, move)
         if move_result is not None:
@@ -1693,7 +1688,7 @@ class Position:
         """
         Returns a list of all the available legal moves (if any)
         for a particular colour i.e. 'rival_to_move'
-       """
+        """
 
         all_moves_list = self.all_pawn_moves(rival_to_move)
         all_moves_list.extend(self.all_king_moves(rival_to_move))
@@ -1934,8 +1929,6 @@ def update_wakegame_position(position: Position,
         original['halfmove_clock'] = position.halfmove_clock
         position.halfmove_clock = 0
         original = (
-            # NOTE: the same value 'move.to_square' potentially
-            # is removed twice. Here and in 'update both piece_map' below
             position.remove_opponent_piece_from_square(move.to_square,
                                                        original))
 
@@ -1961,17 +1954,27 @@ def update_wakegame_position(position: Position,
 
     # update both piece_map and mailbox
     map_key = f'piece_map {move.piece_type_number}'
-    assert (map_key not in original)
-    original[map_key] = position.piece_map[move.piece_type_number].copy()
+
+    # The piece_map indexed by 'move.piece_type_number'
+    # may have already been changed by the above
+    # 'if move.is_capture:, if position.is_en_passant_capture' tests.
+    # Hence the reason for the 'not in' test that follows.
+    if map_key not in original:
+        original[map_key] = position.piece_map[move.piece_type_number].copy()
+
+    # Both the mailboxes indexed by the 'from_key/to_key' fields
+    # may have already been changed by the above
+    # 'if move.is_capture:, if position.is_en_passant_capture' tests.
+    # Hence the reason for the two 'not in' tests that follows.
+
     from_key = f'mailbox {move.from_square}'
-    assert (from_key not in original)
-    original[from_key] = position.mailbox[move.from_square]
+    if from_key not in original:
+        original[from_key] = position.mailbox[move.from_square]
+
     to_key = f'mailbox {move.to_square}'
-    if to_key not in original:  # see comments regarding 'move.to_square'
+    if to_key not in original:
         original[to_key] = position.mailbox[move.to_square]
 
-    # NOTE: 'move.to_square' may have already been removed in the above
-    # IF statement regarding 'if move.is_capture:'
     position.piece_map[move.piece_type_number].remove(move.from_square)
     position.piece_map[move.piece_type_number].add(move.to_square)
     position.mailbox[move.from_square] = None
