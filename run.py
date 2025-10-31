@@ -12,6 +12,7 @@ Menezes' QBASIC program can be found at
 """
 
 from typing import Optional, NoReturn
+from dataclasses import dataclass
 import copy  # TODO RE copy/deepcopy
 
 import constants
@@ -35,6 +36,20 @@ from wake_position import undo_changes
 
 INFINITY = float('inf')
 MINUS_INFINITY = -INFINITY
+
+
+@dataclass
+class FromToInfo:
+    from_square_map: str
+    from_file: str
+    from_rank: str
+    to_square_map: str
+    to_file: str
+    to_rank: str
+    targetsquare: str
+    targetvalue: int
+    to_file_number: int
+    to_rank_number: int
 
 
 def handle_internal_error():
@@ -471,11 +486,18 @@ def minimax_root(chess: Game, wake_game: WakeGame,
 
     # Generate all the possible legal moves for the computer
     moves_list = wake_game.position.all_legal_moves_list(Rival.COMPUTER)
+    
+    # Check for empty list! If so, CHECKMATE!
+    # However CHECKMATE ought to have been checked prior to this!
+    # Therefore, if this happens, some kind of logic error has occurred.
+    # So, raise an error
+    if not moves_list:
+        raise CustomException("Internal Error: Unexpected Checkmate "
+                              "within Minimax")
 
     result = minimax(chess, wake_game,
                      moves_list,
                      level=0,
-                     current_score=0,
                      rival=Rival.COMPUTER,
                      is_maximising=True,
                      alpha=MINUS_INFINITY,
@@ -484,7 +506,7 @@ def minimax_root(chess: Game, wake_game: WakeGame,
     #  TODO
     # Generate all the possible legal moves for the computer
     # moves_list = wake_game.position.all_legal_moves_list(Rival.COMPUTER)
-    print(moves_list)
+    print(moves_list)  # TODO REMOVE P
     assert moves_list  # TODO DEFENSIVE GUARD
     print("RESULT", result)
     print(next_move)
@@ -519,11 +541,38 @@ def minimax_root(chess: Game, wake_game: WakeGame,
     quit()
 
 
-# SECOND ATTEMPT
+# SECOND ATTEMPT OF MINIMAX
+def fetch_from_to_info(chess: Game, 
+                       from_square: int,
+                       to_square: int) -> FromToInfo:
+    
+    # Convert numbered squares to file-rank format
+    # i.e. 10 to "c2",33 to "b5", etc.
+    from_square_map = SQUARE_MAP[from_square]
+    from_file = from_square_map[0]  # e.g. for b8 ==> b
+    from_rank = from_square_map[1]  # e.g. for b8 ==> 8
+    to_square_map = SQUARE_MAP[to_square]
+    to_file = to_square_map[0]  # e.g. for a6 ==> a
+    to_rank = to_square_map[1]  # e.g. for a6 ==> 6
+    targetsquare = to_file + to_rank
+    #  TODO: REMOVE REF TO 'chess'
+    targetvalue = chess.piece_value(targetsquare)
+    (to_file_number, to_rank_number) = coords_formula(to_file,
+                                                        to_rank)
+    return FromToInfo(from_square_map,
+                      from_file,
+                      from_rank,
+                      to_square_map,
+                      to_file,
+                      to_rank,
+                      targetsquare,
+                      targetvalue,
+                      to_file_number,
+                      to_rank_number)
+
 def minimax(chess: Game, wake_game: WakeGame,
             valid_moves,
             level: int,
-            current_score: int,
             rival: int,
             is_maximising: bool,
             alpha: float,
@@ -541,107 +590,94 @@ def minimax(chess: Game, wake_game: WakeGame,
     if level == constants.MAXLEVEL:
         return 0
 
-    # TODO REMOVE
-    # best_score = MINUS_INFINITY if is_maximising else INFINITY
-
-    # Determine the rival
-    # TODO    rival = (Rival.COMPUTER if id < 0 else Rival.PLAYER)
-
-    # Generate all possible legal moves for the Current Rival
-    # moves_list = wake_game.position.all_legal_moves_list(rival)
-
-    # Check for empty list! If so, CHECKMATE!
-    # if MAXIMISING, this is a win, return INFINITY
-    # otherwise this is a lost, return -INFINITY
-
     if is_maximising:
         max_score = MINUS_INFINITY
         for from_square, to_square in valid_moves:
+
             # Convert numbered squares to file-rank format
             # i.e. 10 to "c2",33 to "b5", etc.
-            from_square_map = SQUARE_MAP[from_square]
-            from_file = from_square_map[0]  # e.g. for b8 ==> b
-            from_rank = from_square_map[1]  # e.g. for b8 ==> 8
-            to_square_map = SQUARE_MAP[to_square]
-            to_file = to_square_map[0]  # e.g. for a6 ==> a
-            to_rank = to_square_map[1]  # e.g. for a6 ==> 6
-            targetsquare = to_file + to_rank
-            #  TODO: REMOVE REF TO 'chess'
-            targetvalue = chess.piece_value(targetsquare)
-            (to_file_number, to_rank_number) = coords_formula(to_file,
-                                                              to_rank)
+            moveinfo = fetch_from_to_info(chess,
+                                          from_square,
+                                          to_square)
 
-            # print(valid_moves) # TODO P
-            # print(from_file, from_rank,
-            #       to_file, to_rank)
             # Convert the move into the WakeEngine format
-            # print(617)  #  TODO P
             wake_move = create_wake_move(wake_game,
-                                         from_file, from_rank,
-                                         to_file, to_rank)
+                                         moveinfo.from_file,
+                                         moveinfo.from_rank,
+                                         moveinfo.to_file, 
+                                         moveinfo.to_rank)
 
             # Make a deep copy of the game and its current position
             # game_copy = copy_game_object(wake_game)
 
-            # Make the move so that it can be evaluated
-            # Keep a record of all the original values
-            # before any changes in 'original'
+            # Make the chess move so that it can be evaluated
+            # Keep a record of all the original values before
+            # any changes in 'original'
             move_result, original = wake_game.position.wake_makemove(wake_move)
 
             if move_result.is_illegal_move:
                 print('ill1')  # TODO REMOVE P
                 quit()
-                continue
+                # This should never happen since only LEGAL CHESS MOVES
+                # ought to have been generated by 'all_legal_moves_list()'
+                # Therefore, if this happens, some kind of 
+                # logic error has occurred.
+                # So, raise an error
+                raise CustomException("Internal Error: "
+                                      "Unexpected Illegal Error "
+                                      "within Minimax")
 
-                # TODO REMOVE
-                print(from_square, to_square, wake_move, 1)
-                # pprint_pieces(game_copy.position.piece_map)
-                pprint_pieces(wake_game.position.piece_map)
-                # this should never happen because
-                # only legal moves ought to have been
-                # generated by 'all_legal_moves_list()'
-                print("INTERNAL ERROR 1")
-                # TODO RAISE EXCEPTION
-                quit()
+            if (move_result.is_king_in_check or
+                move_result.is_checkmate or
+                move_result.is_stalemate):
+                    # Undo all the changes made to the Position object
+                    undo_changes(wake_game.position, original)
 
-            if move_result.is_king_in_check:
-                # ignore this move
-                print('check')  # TODO REMOVE P
-                quit()
-                continue
+                    if move_result.is_king_in_check:
+                        # ignore this move
+                        print('check')  # TODO REMOVE P
+                        quit()
+                        continue
 
-            if move_result.is_checkmate:
-                # if MAXIMISING, this is a win, return INFINITY
-                # otherwise this is a lost, return -INFINITY
-                print('checkmate')  # TODO REMOVE P
-                quit()
-                return INFINITY if is_maximising else MINUS_INFINITY
+                    if move_result.is_checkmate:
+                        # if MAXIMISING, this is a win, return INFINITY
+                        # otherwise this is a lost, return -INFINITY
+                        print('checkmate')  # TODO REMOVE P
+                        quit()
+                        return INFINITY if is_maximising else MINUS_INFINITY
 
-            if move_result.is_stalemate:
-                # this is a draw
-                print('stale')  # TODO REMOVE P
-                quit()
-                return 0
+                    if move_result.is_stalemate:
+                        # this is a draw
+                        print('stale')  # TODO REMOVE P
+                        quit()
+                        return 0
 
-            the_score = (targetvalue +
-                         (8 - abs(4 - to_file_number) -
-                          abs(4 - to_rank_number)))
+            the_score = (moveinfo.targetvalue +
+                         (8 - abs(4 - moveinfo.to_file_number) -
+                          abs(4 - moveinfo.to_rank_number)))
 
             other_rival = (Rival.COMPUTER if rival == Rival.PLAYER
                            else Rival.PLAYER)
             next_moves = wake_game.position.all_legal_moves_list(other_rival)
 
             if not next_moves:
+                # There are no further legal moves at this point
+                # which means CHECKMATE!
+                # if MAXIMISING, this is a win, return INFINITY
+                # otherwise this is a lost, return -INFINITY
+                # Undo all the changes made to the Position object
+                undo_changes(wake_game.position, original)
+                print('checkmate')  # TODO REMOVE P
+                quit()
+                return INFINITY if is_maximising else MINUS_INFINITY
                 print("MAX FAILED", next_moves)  # TODO P
                 quit()
                 return INFINITY if is_maximising else MINUS_INFINITY
 
             the_score += minimax(chess,
-                                 # game_copy,
                                  wake_game,
                                  next_moves,
                                  level,
-                                 current_score,
                                  other_rival,
                                  not is_maximising,
                                  alpha,
@@ -744,7 +780,6 @@ def minimax(chess: Game, wake_game: WakeGame,
                                  wake_game,
                                  next_moves,
                                  level,
-                                 current_score,
                                  other_rival,
                                  not is_maximising,
                                  alpha,
@@ -867,7 +902,7 @@ def minimax1(chess: Game, wake_game: WakeGame,
         (to_file_number, to_rank_number) = coords_formula(to_file,
                                                           to_rank)
 
-        print(879)  # TODO P
+        print(879)  # TODO REMOVE P
         # Convert the move into the WakeEngine format
         wake_move = create_wake_move(wake_game,
                                      from_file, from_rank,
@@ -1207,7 +1242,7 @@ def player_move_validation_loop(chess: Game, wake_game: WakeGame,
             e.is_error_from_input_file()
             continue
 
-        print(1216)  # TODO P
+        print(1216)    # TODO REMOVE P
         # Convert the move into the WakeEngine format
         wake_move = create_wake_move(wake_game,
                                      from_file, from_rank,
@@ -1218,8 +1253,7 @@ def player_move_validation_loop(chess: Game, wake_game: WakeGame,
         # Keep a record of all the original values before changes in 'original'
         move_result, original = wake_game.position.wake_makemove(wake_move)
         # Undo all the changes made to the Position object
-        # TODO RE WHYN
-        # undo_changes(wake_game.position, original)
+        undo_changes(wake_game.position, original)
 
         # TODO
         if move_result.is_king_in_check:

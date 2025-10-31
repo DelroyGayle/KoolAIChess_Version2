@@ -1826,8 +1826,7 @@ class Position:
         knight_piece = knight_rival_map[rival_to_move][THE_PIECE]
 
         # if no attacks, return []
-        if not knight_attacks.any():
-            print("WHYN")  # TODO P
+        if not knight_attacks.any() and self.halfmove > 2:
             quit()
             return []
 
@@ -1921,8 +1920,8 @@ def update_wakegame_position(position: Position,
     """
     By maintaining a dictionary ('original')
     of any changes made to the Position object,
-    if any move error occurs, then any changes
-    can be reverted in a lot faster way then 'deepcopy'
+    if any chess move errors occurs, then any changes
+    can be reverted in a lot faster manner then 'deepcopy'
     """
 
     # empty dictionary of 'changes' to begin with
