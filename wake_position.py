@@ -211,8 +211,6 @@ class Position:
     # TODO
     def wake_makemove(self,
                       move: Move) -> tuple[MoveResult, dict]:
-        # if self.rival_to_move != move.rival_identity:  # TODO
-        #     return self.make_illegal_move_result()
 
         move_result, original = update_wakegame_position(self, move)
         if move_result is not None:
@@ -220,9 +218,7 @@ class Position:
             return move_result, original
 
         if self.king_in_check[move.rival_identity]:
-            print("RESET")  # TODO
-            quit()
-            # self.reset_state_to(original_position)
+            # this move places the rival's own king in check
             return self.make_king_in_check_result(), original
 
         other_rival = (Rival.COMPUTER if move.rival_identity == Rival.PLAYER
@@ -255,7 +251,6 @@ class Position:
         self.position_history.append(generate_fen(self))  # TODO
         self.rival_to_move = switch_rival(self.rival_to_move)
 
-        # print("RET", original)  TODO
         return self.make_move_result(), original
 
     def promote_pawn(self, move: Move) -> None:
@@ -1529,8 +1524,6 @@ class Position:
             self.king_in_check[Rival.COMPUTER] = True
         else:
             self.king_in_check[Rival.COMPUTER] = False
-        #  TODO
-        #  print(self.king_in_check)  # TODO REMOVE P K
 
     def make_move_result(self) -> MoveResult:
         move_result = MoveResult()
@@ -2011,6 +2004,9 @@ def update_wakegame_position(position: Position,
                                                         original)
     original = position.update_attack_bitboards(original)
 
+    # save original values before testing whether king in check
+    original['king_in_check'] = list(position.king_in_check)
+
     position.evaluate_king_check()
 
     return None, original
@@ -2023,18 +2019,21 @@ def evaluate_move(move: Move,
     """
 
     move_result, original = update_wakegame_position(position, move)
+    is_king_in_check = position.king_in_check[position.rival_to_move]
+
     # Undo all the changes made to the Position object
+    # including the 'king_in_check' field
     undo_changes(position, original)
 
     if move_result is not None:
         # a move error occurred
         return move_result
 
-    if position.king_in_check[position.rival_to_move]:
-        # TODO
-        # return position.make_illegal_move_result("own king in check")
+    # Test at this point whether the rival's own king was in check
+    if is_king_in_check or position.king_in_check[position.rival_to_move]:
         return position.make_illegal_move_result()
 
+    # Otherwise legal chess move
     return position.make_move_result()
 
 
